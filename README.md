@@ -2,7 +2,7 @@
 
 **Premium Analytics Platform for Xandeum pNodes**
 
-XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum](https://xandeum.network) storage provider nodes (pNodes). Built for the Xandeum Bounty Program, it provides real-time insights into network health, node performance, and filesystem operations.
+XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum](https://xandeum.network) storage provider nodes (pNodes). It provides real-time insights into network health, node performance, and filesystem operations.
 
 ![XanScope Dashboard](public/og-image.png)
 
@@ -84,7 +84,7 @@ XanScope uses a **Dual-Client Architecture** to support both development (mock d
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/xanscope.git
+git clone https://github.com/AngryPacifist/xanscope.git
 cd xanscope
 
 # Install dependencies
