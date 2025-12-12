@@ -20,16 +20,6 @@ const randomBetween = (min: number, max: number) => Math.random() * (max - min) 
 const randomInt = (min: number, max: number) => Math.floor(randomBetween(min, max));
 const randomPick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
-// Seeded random for deterministic data (ensures consistency across page loads)
-const seededRandom = (seed: number): number => {
-  const x = Math.sin(seed * 9999) * 10000;
-  return x - Math.floor(x);
-};
-const seededRandomInt = (seed: number, min: number, max: number) =>
-  Math.floor(seededRandom(seed) * (max - min) + min);
-const seededPick = <T>(seed: number, arr: T[]): T =>
-  arr[Math.floor(seededRandom(seed) * arr.length)];
-
 const RELEASES = ["Heidelberg", "Stuttgart", "Ingolstadt", "Munich", "Freiburg"];
 const VERSIONS = ["0.7.0", "0.6.1", "0.6.0", "0.5.2", "0.5.0"];
 const PROVIDERS = ["AWS", "GCP", "Azure", "Hetzner", "DigitalOcean", "OVH", "Vultr", "Linode", "Scaleway"];
