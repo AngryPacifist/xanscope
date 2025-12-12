@@ -26,6 +26,8 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 - **Tree Browser** — Navigate directory structures
 - **Operations Log** — Track recent file operations (peek, poke, etc.)
 
+> *Note: Filesystem data currently uses demo content — awaiting Xandeum chain indexer for live integration.*
+
 ### Operators Dashboard
 - **My Nodes** — Personal watchlist stored in localStorage
 - **Quick Stats** — Aggregated metrics for tracked nodes

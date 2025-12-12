@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { HolographicCard } from "@/components/ui/holographic-card";
 import { StatusPill } from "@/components/ui/status-pill";
-import { cn } from "@/lib/utils";
+import { cn, formatCompactNumber } from "@/lib/utils";
 import type { FileSystemSummary, FileSystemOperation } from "@/lib/types";
 
 interface FilesystemsClientProps {
@@ -181,7 +181,7 @@ export function FilesystemsClient({ filesystems, operations }: FilesystemsClient
                 <StatsCard icon={Database} label="Total Filesystems" value={stats.total.toString()} color="bg-brand-cyan/20" />
                 <StatsCard icon={Activity} label="Active" value={stats.active.toString()} color="bg-brand-success/20" />
                 <StatsCard icon={HardDrive} label="Total Storage" value={`${stats.totalStorage.toFixed(1)} TB`} color="bg-brand-purple/20" />
-                <StatsCard icon={FileText} label="Total Files" value={stats.totalFiles.toLocaleString()} color="bg-amber-500/20" />
+                <StatsCard icon={FileText} label="Total Files" value={formatCompactNumber(stats.totalFiles)} color="bg-amber-500/20" />
             </div>
 
             {/* Search and Filters */}

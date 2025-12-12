@@ -43,16 +43,19 @@ export function SiteHeader() {
 
       {/* Desktop: Full layout with brand and nav */}
       <div className="hidden lg:flex pointer-events-auto px-6 py-4 items-center justify-between">
-        {/* XANDEUM Logo - Left side, hidden on homepage */}
+        {/* XANDEUM Logo + Text - Left side, hidden on homepage */}
         {!isHome ? (
           <Link
             href="/"
-            className="font-mono text-[10px] text-brand-cyan uppercase tracking-[0.3em] hover:text-white transition-colors"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
           >
-            XANDEUM
+            <img src="/favicon.png" alt="Xandeum" className="w-5 h-5" />
+            <span className="font-mono text-[10px] text-brand-cyan uppercase tracking-[0.3em]">
+              XANDEUM
+            </span>
           </Link>
         ) : (
-          <div className="w-20" /> /* Spacer for balance */
+          <div className="w-24" /> /* Spacer for balance */
         )}
 
         {/* Centered nav */}
