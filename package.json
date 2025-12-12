@@ -9,10 +9,21 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@types/mapbox-gl": "^3.4.1",
+    "@types/three": "^0.182.0",
+    "clsx": "^2.1.1",
+    "cobe": "^0.6.5",
     "d3-geo": "^3.1.1",
+    "framer-motion": "^12.23.26",
+    "lucide-react": "^0.560.0",
+    "mapbox-gl": "^3.17.0",
     "next": "16.0.8",
     "react": "19.2.1",
     "react-dom": "19.2.1",
+    "react-globe.gl": "^2.37.0",
+    "react-map-gl": "^8.1.0",
+    "tailwind-merge": "^3.4.0",
+    "three": "^0.182.0",
     "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },

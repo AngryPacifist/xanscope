@@ -1,52 +1,76 @@
-type JsonRpcResponse<T> = {
-  jsonrpc: "2.0";
-  result?: T;
-  error?: {
-    code: number;
-    message: string;
-  };
-  id: number;
-};
 
-const DEFAULT_HEADERS = {
-  "Content-Type": "application/json",
-};
+import { PrpcResponse, PNodeStats, PrpcPeer } from "./types";
 
-const prpcEndpoint =
-  process.env.PRPC_ENDPOINT || process.env.NEXT_PUBLIC_PRPC_ENDPOINT || "";
+const TIMEOUT_MS = 5000;
 
-export async function callPrpc<T>(
-  method: string,
-  params?: Record<string, unknown>
-): Promise<T | null> {
-  if (!prpcEndpoint) {
-    return null;
+export class PrpcClient {
+  private endpoint: string;
+
+  constructor(endpoint?: string) {
+    this.endpoint = endpoint || process.env.PRPC_ENDPOINT || "http://127.0.0.1:6000/rpc";
   }
 
-  const payload = {
-    jsonrpc: "2.0" as const,
-    method,
-    params,
-    id: Date.now(),
-  };
+  /**
+   * Generic JSON-RPC 2.0 caller
+   */
+  private async call<T>(method: string, params?: unknown): Promise<T> {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-  try {
-    const response = await fetch(prpcEndpoint, {
-      method: "POST",
-      headers: DEFAULT_HEADERS,
-      body: JSON.stringify(payload),
-      cache: "no-store",
-    });
+    try {
+      const payload = {
+        jsonrpc: "2.0",
+        method,
+        params,
+        id: Date.now(),
+      };
 
-    const json = (await response.json()) as JsonRpcResponse<T>;
-    if (json.error) {
-      console.warn("pRPC error", json.error);
-      return null;
+      const res = await fetch(this.endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error(`pRPC Error: ${res.statusText}`);
+      }
+
+      const json = (await res.json()) as PrpcResponse<T>;
+
+      if (json.error) {
+        throw new Error(`pRPC Protocol Error: ${json.error.message} (Code: ${json.error.code})`);
+      }
+
+      return json.result;
+    } finally {
+      clearTimeout(id);
     }
+  }
 
-    return json.result ?? null;
-  } catch (error) {
-    console.warn("pRPC call failed", error);
-    return null;
+  // --- Official pNode API Methods ---
+
+  /**
+   * Returns the current version of the pnode software.
+   */
+  async getVersion(): Promise<{ version: string }> {
+    return this.call("get-version");
+  }
+
+  /**
+   * Returns comprehensive statistics about the pnode.
+   */
+  async getStats(): Promise<{ metadata: any; stats: PNodeStats; file_size: number }> {
+    return this.call("get-stats");
+  }
+
+  /**
+   * Returns a list of all known peer pnodes.
+   */
+  async getPods(): Promise<{ pods: PrpcPeer[]; total_count: number }> {
+    return this.call("get-pods");
   }
 }
+
+export const prpcClient = new PrpcClient();

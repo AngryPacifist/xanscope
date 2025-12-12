@@ -1,294 +1,207 @@
-import Link from "next/link";
-import { PageHeading } from "@/components/layout/page-heading";
-import { MetricCard } from "@/components/ui/metric-card";
-import { Card } from "@/components/ui/card";
-import { SimpleTable } from "@/components/ui/simple-table";
-import { StatusPill } from "@/components/ui/status-pill";
-import { NetworkMap } from "@/components/network/network-map";
-import {
-  fetchActivityFeed,
-  fetchFsSummaries,
-  fetchLeaderboards,
-  fetchNetworkOverview,
-  fetchPnodes,
-} from "@/lib/data-service";
-import { TrackerInput } from "@/components/operators/tracker-input";
+"use client";
 
-export default async function Home() {
-  const [overview, nodes, fileSystems, leaderboard, activity] =
-    await Promise.all([
-      fetchNetworkOverview(),
-      fetchPnodes(),
-      fetchFsSummaries(),
-      fetchLeaderboards(),
-      fetchActivityFeed(),
-    ]);
+import { useEffect, useState } from "react";
+import { Activity, HardDrive, Network, Zap, Database, Cpu, BarChart3, Users } from "lucide-react";
+import { HolographicCard, MetricValue } from "@/components/ui/holographic-card";
+import { MapboxGlobe } from "@/components/visuals/mapbox-globe";
+import { Starfield } from "@/components/visuals/starfield";
+import { HudOverlay } from "@/components/visuals/hud-overlay";
+import { fetchNetworkOverview, fetchActivityFeed } from "@/lib/data-service";
+import type { NetworkOverview, ActivityFeedItem } from "@/lib/types";
 
-  const uptimeLeaders = nodes
-    .slice()
-    .sort((a, b) => b.uptimePercentage - a.uptimePercentage)
-    .slice(0, 3);
+const generateFeedItem = (): ActivityFeedItem => {
+  const titles = [
+    "Tokyo Hub synced", "NYC Gateway heartbeat", "London Node verified",
+    "Storage allocation", "Peer discovery", "Block propagated",
+    "Shard replicated", "Validator online", "Consensus reached",
+  ];
+  const descriptions = [
+    "Performance score: 0.98", "Latency: 12ms avg", "Storage: 2.4TB allocated",
+    "Replication factor: 3x", "Gossip round complete", "Block height: 1,247,891",
+  ];
+
+  return {
+    id: `feed-${Date.now()}-${Math.random()}`,
+    type: "node",
+    title: titles[Math.floor(Math.random() * titles.length)],
+    description: descriptions[Math.floor(Math.random() * descriptions.length)],
+    timestamp: new Date().toISOString(),
+    severity: "info",
+  };
+};
+
+export default function DashboardPage() {
+  const [overview, setOverview] = useState<NetworkOverview | null>(null);
+  const [activity, setActivity] = useState<ActivityFeedItem[]>([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    Promise.all([fetchNetworkOverview(), fetchActivityFeed()]).then(
+      ([overviewData, activityData]) => {
+        setOverview(overviewData);
+        setActivity(activityData);
+      }
+    );
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const feedInterval = setInterval(() => {
+      setActivity(prev => [generateFeedItem(), ...prev.slice(0, 9)]);
+    }, 4000);
+    return () => clearInterval(feedInterval);
+  }, []);
+
+  if (!overview) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-brand-cyan font-mono animate-pulse text-2xl tracking-widest">
+          INITIALIZING...
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-10">
-      <PageHeading
-        title="Xandeum pNode Intelligence"
-        description="Live network snapshot, filesystem activity, and operator insights — all streaming from pnRPC and filesystem telemetry in one glass dashboard."
-        actions={
-          <Link
-            href="/docs"
-            className="rounded-full border border-white/20 px-5 py-2 text-sm font-medium text-white transition hover:border-white/60"
-          >
-            View Docs
-          </Link>
-        }
-      />
+    <div className="relative min-h-screen overflow-hidden">
+      {/* Background layers */}
+      <Starfield starCount={150} />
+      <HudOverlay />
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#051236] via-[#08143e] to-[#120a2a] p-6 shadow-2xl">
-          <p className="text-sm uppercase tracking-[0.4em] text-cyan-200">
-            Redefining passive income
-          </p>
-          <h2 className="mt-3 text-3xl font-semibold text-white">
-            The scaling solution for Solana storage
-          </h2>
-          <p className="mt-3 text-sm text-slate-300">
-            Unlock revolutionary insights across pnRPC, filesystem workloads and
-            operator telemetry — XanScope makes Xandeum network intelligence
-            tangible.
-          </p>
-          <Link
-            href="/network"
-            className="mt-6 inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-violet-500 px-6 py-2 text-sm font-semibold text-white shadow-lg transition hover:opacity-90"
-          >
-            Discover STOINC
-          </Link>
-        </div>
-        <TrackerInput />
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label="Total pNodes"
-          value={overview.totalNodes.toString()}
-          delta={`${overview.onlineNodes} online`}
-        />
-        <MetricCard
-          label="Network Capacity"
-          value={`${overview.capacityTb} TB`}
-          delta="+12 TB last 24h"
-          accent="cyan"
-        />
-        <MetricCard
-          label="Average Performance"
-          value={(overview.averagePerformance * 100).toFixed(1) + "%"}
-          delta="Top quartile healthy"
-          accent="violet"
-        />
-        <MetricCard
-          label="Active File Systems"
-          value={fileSystems.length.toString()}
-          delta="3 highlighted workloads"
-          accent="orange"
-        />
-      </div>
+      {/* GLOBE - Full viewport Mapbox globe */}
+      <MapboxGlobe />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                Gossip Snapshot
-              </p>
-              <h2 className="text-xl font-semibold">Network timeline</h2>
-              <p className="text-sm text-slate-300">
-                Last updated {new Date(overview.lastUpdated).toLocaleTimeString()}
-              </p>
+      {/* Content overlay - Cards float on top with pointer-events only on the cards */}
+      <div className="relative z-20 min-h-screen pointer-events-none">
+
+        {/* Top section - Clock */}
+        <div className="flex justify-end px-8 pt-20 pointer-events-auto">
+          <div className="text-right">
+            <div className="font-mono text-4xl text-white tracking-wider tabular-nums">
+              {currentTime.toLocaleTimeString('en-US', { hour12: false })}
             </div>
-            <Link
-              href="/network"
-              className="text-sm font-medium text-cyan-300 underline-offset-4 hover:underline"
-            >
-              Open network map
-            </Link>
+            <div className="font-mono text-xs text-white/40 tracking-widest mt-1">
+              UTC{currentTime.getTimezoneOffset() <= 0 ? '+' : ''}{-currentTime.getTimezoneOffset() / 60}
+            </div>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {overview.regions.map((region) => (
-              <Card key={region.name} className="bg-white/5 p-4">
-                <p className="text-xs uppercase tracking-[0.25em] text-slate-400">
-                  {region.name}
-                </p>
-                <p className="mt-2 text-2xl font-semibold">{region.nodes} nodes</p>
-                <p className="text-sm text-emerald-300">
-                  {region.online} online · {region.capacityTb} TB
-                </p>
-              </Card>
-            ))}
-          </div>
-        </Card>
-        <Card>
-          <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-            Activity
-          </p>
-          <h2 className="mt-2 text-xl font-semibold">Live intelligence</h2>
-          <div className="mt-4 space-y-4">
-            {activity.map((item) => (
-              <div key={item.id} className="rounded-2xl border border-white/10 p-4">
-                <div className="flex items-center justify-between text-xs uppercase tracking-[0.25em]">
-                  <span className="text-slate-400">{item.type}</span>
-                  <span className="text-slate-500">
-                    {new Date(item.timestamp).toLocaleTimeString()}
-                  </span>
+        </div>
+
+        {/* Main content - Cards float on sides */}
+        <div className="flex justify-between items-start px-8 mt-8">
+
+          {/* Left Column - Stats */}
+          <div className="w-72 space-y-3 pointer-events-auto">
+            <HolographicCard active className="backdrop-blur-xl bg-black/40">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded bg-brand-cyan/20">
+                  <Network size={16} className="text-brand-cyan" />
                 </div>
-                <p className="mt-2 text-sm font-semibold">{item.title}</p>
-                <p className="text-xs text-slate-300">{item.description}</p>
+                <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Active Nodes</span>
+              </div>
+              <MetricValue value={overview.onlineNodes.toString()} label="" />
+              <div className="mt-2 text-[10px] font-mono text-white/50">of {overview.totalNodes} total nodes</div>
+            </HolographicCard>
+
+            <HolographicCard className="backdrop-blur-xl bg-black/40">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded bg-brand-purple/20">
+                  <HardDrive size={16} className="text-brand-purple" />
+                </div>
+                <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Storage</span>
+              </div>
+              <MetricValue value={`${overview.capacityTb} TB`} label="" />
+              <div className="mt-3 h-3 bg-white/10 rounded-full overflow-hidden">
+                <div className="h-full w-2/3 bg-gradient-to-r from-[#00E0FF] via-[#7C3AED] to-[#A855F7] rounded-full shadow-[0_0_10px_rgba(0,224,255,0.5)]" />
+              </div>
+            </HolographicCard>
+
+            <HolographicCard className="backdrop-blur-xl bg-black/40">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded bg-brand-success/20">
+                  <Zap size={16} className="text-brand-success" />
+                </div>
+                <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Uptime</span>
+              </div>
+              <MetricValue value={`${overview.uptimePercent}%`} label="" />
+            </HolographicCard>
+
+            <HolographicCard className="backdrop-blur-xl bg-black/40">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded bg-amber-500/20">
+                  <Database size={16} className="text-amber-400" />
+                </div>
+                <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Filesystems</span>
+              </div>
+              <MetricValue value={overview.totalFilesystems.toString()} label="" />
+            </HolographicCard>
+          </div>
+
+          {/* Right Column - Activity Feed */}
+          <div className="w-80 pointer-events-auto">
+            <HolographicCard className="backdrop-blur-xl bg-black/40">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Activity size={14} className="text-brand-purple" />
+                  <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Live Feed</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-success animate-pulse" />
+                  <span className="font-mono text-[9px] text-brand-success">LIVE</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 max-h-[350px] overflow-hidden relative">
+                {activity.slice(0, 7).map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="p-2.5 rounded bg-white/5 border border-white/5 hover:border-brand-cyan/30 transition-all"
+                    style={{ opacity: 1 - (index * 0.1) }}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono text-[11px] text-white font-medium truncate">
+                          {item.title}
+                        </div>
+                        <div className="font-mono text-[9px] text-white/80 mt-0.5">
+                          {item.description}
+                        </div>
+                      </div>
+                      <div className="font-mono text-[9px] text-white/50 shrink-0 tabular-nums">
+                        {new Date(item.timestamp).toLocaleTimeString([], { hour12: false })}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+              </div>
+            </HolographicCard>
+          </div>
+        </div>
+
+        {/* Bottom Stats Row */}
+        <div className="fixed bottom-8 left-8 right-8 z-30 pointer-events-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 max-w-6xl mx-auto">
+            {[
+              { icon: Activity, value: "8ms", label: "Read Latency" },
+              { icon: BarChart3, value: "2.4 GB/s", label: "Throughput" },
+              { icon: Network, value: "3x", label: "Replication" },
+              { icon: HardDrive, value: `${(overview.capacityTb / 1000).toFixed(1)} PB`, label: "Total Data" },
+              { icon: Cpu, value: `${(overview.averagePerformance * 100).toFixed(0)}%`, label: "Network Health" },
+            ].map(({ icon: Icon, value, label }) => (
+              <div key={label} className="p-3 bg-black/50 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-3">
+                <Icon size={18} className="text-brand-cyan/70" />
+                <div>
+                  <div className="font-mono text-lg font-bold text-white tabular-nums">{value}</div>
+                  <div className="font-mono text-[8px] text-white/40 uppercase tracking-widest">{label}</div>
+                </div>
               </div>
             ))}
           </div>
-        </Card>
-      </div>
-
-      <NetworkMap nodes={nodes} />
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                Node explorer
-              </p>
-              <h2 className="text-xl font-semibold">Top performance nodes</h2>
-            </div>
-            <Link
-              href="/nodes"
-              className="text-sm font-medium text-cyan-300 underline-offset-4 hover:underline"
-            >
-              View table
-            </Link>
-          </div>
-          <SimpleTable
-            data={leaderboard}
-            keyExtractor={(item) => item.id}
-            columns={[
-              {
-                header: "Node",
-                accessor: "label",
-                render: (value, row) => (
-                  <div>
-                    <p className="font-semibold">{value as string}</p>
-                    <p className="text-xs text-slate-400">{row.metric}</p>
-                  </div>
-                ),
-              },
-              {
-                header: "Score",
-                accessor: "score",
-                render: (value) => (
-                  <p className="font-mono">{(value as number).toFixed(2)}</p>
-                ),
-              },
-              {
-                header: "Delta",
-                accessor: "delta",
-                render: (value) => (
-                  <p
-                    className={`text-sm ${
-                      (value as number) >= 0
-                        ? "text-emerald-300"
-                        : "text-rose-300"
-                    }`}
-                  >
-                    {(value as number) >= 0 ? "+" : ""}
-                    {(value as number).toFixed(2)}
-                  </p>
-                ),
-              },
-            ]}
-          />
-        </Card>
-        <Card>
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-                File systems
-              </p>
-              <h2 className="text-xl font-semibold">Highlighted workloads</h2>
-            </div>
-            <Link
-              href="/fs"
-              className="text-sm font-medium text-cyan-300 underline-offset-4 hover:underline"
-            >
-              Explore FS
-            </Link>
-          </div>
-          <div className="space-y-4">
-            {fileSystems.map((fs) => (
-              <Link
-                key={fs.fsid}
-                href={`/fs/${fs.fsid}`}
-                className="block rounded-2xl border border-white/10 p-4 transition hover:border-cyan-300/50"
-              >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm uppercase tracking-[0.25em] text-slate-400">
-                      {fs.fsid}
-                    </p>
-                    <p className="text-lg font-semibold">{fs.label}</p>
-                  </div>
-                  <StatusPill
-                    label={fs.status}
-                    variant={
-                      fs.status === "active"
-                        ? "online"
-                        : fs.status === "idle"
-                        ? "syncing"
-                        : "offline"
-                    }
-                  />
-                </div>
-                <p className="mt-2 text-sm text-slate-300">
-                  {fs.totalFiles} files · {(fs.storageUsedGb / 1024).toFixed(1)} TB{" "}
-                  used
-                </p>
-              </Link>
-            ))}
-          </div>
-        </Card>
-      </div>
-
-      <Card>
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-cyan-300">
-              Availability
-            </p>
-            <h2 className="text-xl font-semibold">Uptime leaderboard</h2>
-          </div>
-          <Link
-            href="/operators"
-            className="text-sm font-medium text-cyan-300 underline-offset-4 hover:underline"
-          >
-            Open cockpit
-          </Link>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          {uptimeLeaders.map((node) => (
-            <div
-              key={node.id}
-              className="rounded-2xl border border-white/10 bg-slate-950/30 p-4"
-            >
-              <p className="text-sm uppercase tracking-[0.25em] text-slate-400">
-                {node.label}
-              </p>
-              <p className="mt-2 text-3xl font-semibold">
-                {node.uptimePercentage.toFixed(2)}%
-              </p>
-              <p className="text-sm text-slate-400">
-                Last heartbeat {new Date(node.lastHeartbeat).toLocaleTimeString()}
-              </p>
-            </div>
-          ))}
-        </div>
-      </Card>    </div>
+
+      </div>
+    </div>
   );
 }

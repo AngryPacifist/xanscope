@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteHeader } from "@/components/layout/site-header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "XanScope | Xandeum pNode Intelligence",
+  title: "XanScope | Xandeum Network Command Center",
   description:
-    "XanScope delivers real-time insights, filesystem analytics, and operator tooling for the Xandeum storage layer.",
+    "Real-time analytics, filesystem intelligence, and operator tooling for the Xandeum decentralized storage network.",
 };
 
 export default function RootLayout({
@@ -25,17 +25,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="bg-[#030a2a]">
+    <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#030a2a] text-slate-100`}
+        className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased bg-brand-black text-white min-h-screen`}
       >
-        <div className="relative min-h-screen overflow-x-hidden">
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(112,91,255,0.25),_transparent_60%)]" />
-          <SiteHeader />
-          <main className="relative mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 lg:px-8">
-            {children}
-          </main>
-        </div>
+        <SiteHeader />
+        <main className="relative">
+          {children}
+        </main>
       </body>
     </html>
   );

@@ -1,12 +1,44 @@
 export type NodeStatus = "online" | "offline" | "syncing";
 
+// JSON-RPC 2.0 Response Wrapper
+export interface PrpcResponse<T> {
+  jsonrpc: "2.0";
+  result: T;
+  error?: {
+    code: number;
+    message: string;
+  };
+  id: number;
+}
+
+// Maps to "pods" item in get-pods (Raw JSON-RPC)
+export interface PrpcPeer {
+  address: string; // "192.168.1.100:9001"
+  version: string;
+  last_seen: string;
+  last_seen_timestamp: number;
+}
+
+// UI-friendly PeerNode (used by components)
 export interface PeerNode {
-  id: string;
+  id: string; // Derived or placeholder
   address: string;
   version: string;
   lastSeen: string;
 }
 
+// Maps to "stats" object in get-stats
+export interface PNodeStats {
+  cpu_percent: number;
+  ram_used: number;
+  ram_total: number;
+  uptime: number;
+  packets_received: number;
+  packets_sent: number;
+  active_streams: number;
+}
+
+// UI-friendly normalized Node
 export interface PNode {
   id: string;
   label: string;
@@ -54,6 +86,8 @@ export interface NetworkOverview {
   releases: Record<string, number>;
   averagePerformance: number;
   lastUpdated: string;
+  uptimePercent: number;
+  totalFilesystems: number;
   regions: Array<{
     name: string;
     nodes: number;
@@ -80,7 +114,7 @@ export interface FileSystemSummary {
   storageUsedGb: number;
   storageLimitGb: number;
   lastActivity: string;
-  status: "active" | "idle" | "error";
+  status: "active" | "idle" | "error" | "archived";
 }
 
 export type FsEntryType = "directory" | "file";
@@ -98,15 +132,15 @@ export interface FileSystemOperation {
   id: string;
   fsid: string;
   opType:
-    | "peek"
-    | "poke"
-    | "createFile"
-    | "createDirectory"
-    | "renamePath"
-    | "move"
-    | "copyPath"
-    | "removeFile"
-    | "removeDirectory";
+  | "peek"
+  | "poke"
+  | "createFile"
+  | "createDirectory"
+  | "renamePath"
+  | "move"
+  | "copyPath"
+  | "removeFile"
+  | "removeDirectory";
   path: string;
   actor: string;
   nodeId: string;

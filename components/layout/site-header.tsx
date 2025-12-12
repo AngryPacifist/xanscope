@@ -1,29 +1,60 @@
+"use client";
+
 import Link from "next/link";
-import { MainNav } from "./main-nav";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { LayoutDashboard, Server, HardDrive, Users } from "lucide-react";
+
+const NAV_ITEMS = [
+  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/nodes", label: "Nodes", icon: Server },
+  { href: "/fs", label: "Filesystems", icon: HardDrive },
+  { href: "/operators", label: "Operators", icon: Users },
+];
 
 export function SiteHeader() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-[#030a2a]/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
-        <Link
-          href="/"
-          className="text-2xl font-semibold tracking-tight text-white"
-        >
-          Xandeum
-        </Link>
-        <MainNav />
-        <div className="flex items-center gap-3">
-          <span className="hidden text-xs font-semibold uppercase tracking-wide text-cyan-200 md:inline">
-            Live telemetry
-          </span>
+    <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
+      <div className="pointer-events-auto px-6 py-4 flex items-center justify-between">
+        {/* XANSCOPE Logo - Left side, clickable to home, hidden on homepage */}
+        {!isHome ? (
           <Link
-            href="https://xandeum.network"
-            target="_blank"
-            className="rounded-full border border-white/20 px-4 py-1 text-sm font-medium text-white transition hover:border-white/60"
+            href="/"
+            className="font-mono text-[10px] text-brand-cyan uppercase tracking-[0.3em] hover:text-white transition-colors"
           >
-            Network
+            XANSCOPE
           </Link>
-        </div>
+        ) : (
+          <div />
+        )}
+
+        {/* Centered nav */}
+        <nav className="flex items-center gap-1 p-1 rounded-full bg-black/40 backdrop-blur-xl border border-white/10">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-1.5 rounded-full font-mono text-xs tracking-wider transition-all",
+                  isActive
+                    ? "bg-brand-cyan/20 text-brand-cyan"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <Icon size={14} />
+                <span className="hidden sm:inline">{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Empty right side for balance */}
+        <div className="w-20" />
       </div>
     </header>
   );
