@@ -76,7 +76,7 @@ export async function fetchPnodes(): Promise<PNode[]> {
 
     // Map raw RPC pods to our UI PNode model
     return pods.map((pod, index) => ({
-      id: pod.pubkey || `real_${index}`,
+      id: `${pod.pubkey || pod.address}_${index}`,
       label: `Node ${pod.address.split(":")[0]}`,
       address: pod.address,
       region: "Unknown", // GeoIP would go here in prod

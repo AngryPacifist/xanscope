@@ -1,52 +1,82 @@
 
 import { PrpcResponse, PNodeStats, PrpcPeer } from "./types";
+import http from "http";
 
 const TIMEOUT_MS = 5000;
 
 export class PrpcClient {
   private endpoint: string;
+  private host: string;
+  private port: number;
+  private path: string;
 
   constructor(endpoint?: string) {
     this.endpoint = endpoint || process.env.PRPC_ENDPOINT || "http://127.0.0.1:6000/rpc";
+    console.log("[PrpcClient] Using endpoint:", this.endpoint);
+
+    // Parse the URL
+    const url = new URL(this.endpoint);
+    this.host = url.hostname;
+    this.port = parseInt(url.port) || 6000;
+    this.path = url.pathname;
   }
 
   /**
-   * Generic JSON-RPC 2.0 caller
+   * Generic JSON-RPC 2.0 caller using Node.js http module
    */
-  private async call<T>(method: string, params?: unknown): Promise<T> {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-    try {
-      const payload = {
+  private call<T>(method: string, params?: unknown): Promise<T> {
+    return new Promise((resolve, reject) => {
+      const payload = JSON.stringify({
         jsonrpc: "2.0",
         method,
         params,
         id: Date.now(),
-      };
-
-      const res = await fetch(this.endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-        signal: controller.signal,
-        cache: "no-store",
       });
 
-      if (!res.ok) {
-        throw new Error(`pRPC Error: ${res.statusText}`);
-      }
+      console.log(`[PrpcClient] Calling ${method} at ${this.host}:${this.port}${this.path}`);
 
-      const json = (await res.json()) as PrpcResponse<T>;
+      const options = {
+        hostname: this.host,
+        port: this.port,
+        path: this.path,
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Content-Length": Buffer.byteLength(payload),
+        },
+        timeout: TIMEOUT_MS,
+      };
 
-      if (json.error) {
-        throw new Error(`pRPC Protocol Error: ${json.error.message} (Code: ${json.error.code})`);
-      }
+      const req = http.request(options, (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          try {
+            const json = JSON.parse(data) as PrpcResponse<T>;
+            if (json.error) {
+              reject(new Error(`pRPC Protocol Error: ${json.error.message} (Code: ${json.error.code})`));
+            } else {
+              resolve(json.result);
+            }
+          } catch (e) {
+            reject(new Error(`Failed to parse response: ${e}`));
+          }
+        });
+      });
 
-      return json.result;
-    } finally {
-      clearTimeout(id);
-    }
+      req.on("error", (err) => {
+        console.error(`[PrpcClient] HTTP ERROR for ${method}:`, err.message);
+        reject(err);
+      });
+
+      req.on("timeout", () => {
+        req.destroy();
+        reject(new Error("Request timed out"));
+      });
+
+      req.write(payload);
+      req.end();
+    });
   }
 
   // --- Official pNode API Methods ---
@@ -96,3 +126,4 @@ export interface PrpcPeerWithStats {
 }
 
 export const prpcClient = new PrpcClient();
+

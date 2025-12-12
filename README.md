@@ -2,9 +2,26 @@
 
 **Premium Analytics Platform for Xandeum pNodes**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-xanscope.vercel.app-00E0FF?style=for-the-badge)](https://xanscope.vercel.app)
+[![Documentation](https://img.shields.io/badge/Docs-docs%2F-8B5CF6?style=for-the-badge)](./docs/README.md)
+
 XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum](https://xandeum.network) storage provider nodes (pNodes). It provides real-time insights into network health, node performance, and filesystem operations.
 
+> 🏆 **Built for the Xandeum pNode Analytics Platform Bounty**
+
 ![XanScope Dashboard](public/og-image.png)
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Getting Started](./docs/GETTING-STARTED.md) | Quick setup for developers |
+| [Connecting to pNode](./docs/CONNECTING-PNODE.md) | Use real data from live pNodes |
+| [Deployment Guide](./docs/DEPLOYMENT.md) | Deploy to Vercel, Docker, VPS |
+| [API Reference](./docs/API-REFERENCE.md) | pRPC methods used |
+| [Architecture](./docs/ARCHITECTURE.md) | System design overview |
 
 ---
 
@@ -20,6 +37,9 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 - **Searchable Grid** — Filter by region, status, version, provider
 - **Node Detail Pages** — Deep-dive into individual node metrics
 - **Performance History** — Timeline charts for each node
+
+![pNode Explorer with Live Data](public/nodes-live-data.png)
+*Nodes Explorer displaying real data from 159 pNodes on the Xandeum network*
 
 ### Filesystem Analytics
 - **FS Summaries** — Overview of all registered filesystems

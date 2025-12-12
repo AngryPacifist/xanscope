@@ -242,7 +242,7 @@ export function NodesClient({ nodes }: Props) {
         {[
           { label: "Total Nodes", value: stats.total.toString(), icon: Server, color: "text-brand-cyan" },
           { label: "Online", value: stats.online.toString(), icon: Wifi, color: "text-brand-success" },
-          { label: "Total Storage", value: `${stats.storage} TB`, icon: HardDrive, color: "text-brand-purple" },
+          { label: "Total Storage", value: `${stats.storage.toFixed(2)} TB`, icon: HardDrive, color: "text-brand-purple" },
           { label: "Avg Performance", value: `${(stats.avgPerformance * 100).toFixed(0)}%`, icon: Activity, color: "text-amber-400" },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="p-4 rounded-xl bg-black/40 backdrop-blur-xl border border-white/10">
