@@ -1,55 +1,281 @@
-## XanScope — Xandeum pNode Intelligence
+# XanScope
 
-This repository contains a multi-page Next.js platform that unifies pRPC analytics, filesystem telemetry, and operator tooling for the Xandeum network.
+**Premium Analytics Platform for Xandeum pNodes**
 
-### Feature Overview
+XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum](https://xandeum.network) storage provider nodes (pNodes). Built for the Xandeum Bounty Program, it provides real-time insights into network health, node performance, and filesystem operations.
 
-- **Overview / Home** – glass dashboard with hero KPIs, live activity feed, filesystem callouts, and uptime leaderboard.
-- **Network** – region utilization, release adoption widgets, and geo roster cards.
-- **Nodes** – searchable explorer with filters plus detailed node timeline pages powered by mock pnRPC data.
-- **File Systems** – workload gallery, per-fs tree view, live operations log, and detail page callouts.
-- **Insights** – analytics canvases for leaderboards, workloads, and stability outlooks.
-- **Operators** – “My cockpit” client-side experience that stores tracked node IDs in localStorage.
-- **Releases / Docs** – release adoption cards and inline documentation for environment variables + API routes.
+![XanScope Dashboard](public/og-image.png)
 
-All API routes currently consume `lib/mock-data.ts` so the UI is interactive without live pnRPC. Swap the mock resolvers with real pnRPC + @xandeum/web3.js code whenever you have access to a running pNode.
+---
 
-### Tech Stack
+## ✨ Features
 
-- Next.js 16 App Router, React 19, TypeScript
-- Tailwind CSS v4 (new `@import "tailwindcss";` pipeline)
-- Custom UI primitives (`Card`, `MetricCard`, `StatusPill`, `Sparkline`)
-- API route scaffolding mirroring the proposed backend contract
+### Dashboard
+- **Network Overview** — Live stats: total nodes, online/offline counts, storage capacity
+- **Interactive Globe** — Mapbox-powered 3D globe showing global pNode distribution
+- **Activity Feed** — Real-time stream of network events
+- **Leaderboard** — Top performing nodes by uptime and reliability
 
-### Running Locally
+### Nodes Explorer
+- **Searchable Grid** — Filter by region, status, version, provider
+- **Node Detail Pages** — Deep-dive into individual node metrics
+- **Performance History** — Timeline charts for each node
+
+### Filesystem Analytics
+- **FS Summaries** — Overview of all registered filesystems
+- **Tree Browser** — Navigate directory structures
+- **Operations Log** — Track recent file operations (peek, poke, etc.)
+
+### Operators Dashboard
+- **My Nodes** — Personal watchlist stored in localStorage
+- **Quick Stats** — Aggregated metrics for tracked nodes
+- **Add Nodes** — Select and monitor specific pNodes
+
+---
+
+## 🏗️ Architecture
+
+XanScope uses a **Dual-Client Architecture** to support both development (mock data) and production (live pRPC) modes:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      data-service.ts                         │
+│                                                              │
+│   ┌─────────────────┐         ┌─────────────────┐           │
+│   │  shouldUseMock  │────────▶│   Mock Data     │           │
+│   │     = true      │         │  mock-data.ts   │           │
+│   └─────────────────┘         └─────────────────┘           │
+│           │                                                  │
+│           ▼ (when PRPC_ENDPOINT is set)                     │
+│   ┌─────────────────┐         ┌─────────────────┐           │
+│   │   prpc-client   │────────▶│  pNode RPC      │ Port 6000 │
+│   │  get-pods       │         │  (JSON-RPC 2.0) │           │
+│   │  get-stats      │         └─────────────────┘           │
+│   │  get-version    │                                        │
+│   └─────────────────┘                                        │
+│                                                              │
+│   ┌─────────────────┐         ┌─────────────────┐           │
+│   │ xandeum-client  │────────▶│  Solana RPC     │ Port 8899 │
+│   │  listDirs       │         │  (Xandeum ext.) │           │
+│   │  getMetadata    │         └─────────────────┘           │
+│   │  exists         │                                        │
+│   └─────────────────┘                                        │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Data Sources
+
+| Client | Endpoint | Purpose |
+|--------|----------|---------|
+| `prpc-client.ts` | `http://<pnode>:6000/rpc` | Node health, peers, stats |
+| `xandeum-client.ts` | `https://api.devnet.solana.com` | Filesystem operations |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+ 
+- npm or pnpm
+- Mapbox account (for globe visualization)
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/your-repo/xanscope.git
+cd xanscope
+
+# Install dependencies
 npm install
+
+# Run development server
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to browse the experience.
+Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
-### Environment Variables
+---
 
-Create a `.env.local` file and provide the following values. They default to mock data so you can skip this step until you’re ready to connect pnRPC and filesystem calls.
+## ⚙️ Environment Variables
 
-```
-NEXT_PUBLIC_PRPC_ENDPOINT=http://<pnode-ip>:6000/rpc
+Create a `.env.local` file in the project root:
+
+```env
+# Mapbox (Required for globe)
+NEXT_PUBLIC_MAPBOX_TOKEN=pk.eyJ1...your_mapbox_token
+
+# pNode RPC Connection (Optional - uses mock data if not set)
 PRPC_ENDPOINT=http://<pnode-ip>:6000/rpc
-XANDEUM_RPC_ENDPOINT=https://apis.devnet.xandeum.com
-XANDEUM_WALLET_SECRET=[12,55,23,...] # JSON array
-NEXT_PUBLIC_USE_MOCK_DATA=true # optional toggle
+
+# Xandeum/Solana RPC (Optional)
+NEXT_PUBLIC_SOLANA_RPC=https://api.devnet.solana.com
+
+# Toggle mock data (defaults to true if PRPC_ENDPOINT not set)
+NEXT_PUBLIC_USE_MOCK_DATA=false
 ```
 
-### Linting
+### Mock Data Mode
+
+By default, XanScope runs with **mock data** enabled. This allows you to:
+- Develop and test the UI without a live pNode
+- Demo the platform without network dependencies
+- Randomized node statuses on each refresh simulate real network activity
+
+### Live Mode
+
+To connect to a real pNode:
+1. Set `PRPC_ENDPOINT` to your pNode's RPC URL
+2. Set `NEXT_PUBLIC_USE_MOCK_DATA=false`
+3. Restart the dev server
+
+---
+
+## 📁 Project Structure
 
 ```
+xanscope/
+├── app/                    # Next.js App Router pages
+│   ├── page.tsx            # Dashboard home
+│   ├── nodes/              # Nodes explorer + detail pages
+│   ├── fs/                 # Filesystem analytics
+│   ├── operators/          # Personal operator dashboard
+│   ├── network/            # Network-wide stats
+│   └── insights/           # Analytics & charts
+├── components/
+│   ├── ui/                 # Base UI primitives (Card, Button, etc.)
+│   ├── layout/             # Header, sidebar, navigation
+│   ├── visuals/            # Globe, charts, animations
+│   ├── nodes/              # Node-specific components
+│   └── fs/                 # Filesystem components
+├── lib/
+│   ├── data-service.ts     # Data aggregation layer
+│   ├── prpc-client.ts      # pNode RPC client
+│   ├── xandeum-client.ts   # Solana/Xandeum RPC client
+│   ├── mock-data.ts        # Development mock data
+│   └── types.ts            # TypeScript interfaces
+└── public/
+    ├── Brief.md            # Bounty requirements
+    ├── XANDEUM API.md      # API documentation
+    └── XANDEUM.md          # Xandeum overview
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 15, React 19 |
+| Styling | Tailwind CSS v4 |
+| Globe | Mapbox GL JS |
+| Animations | CSS + Framer Motion |
+| Icons | Lucide React |
+| State | React hooks + localStorage |
+
+---
+
+## 🔌 pRPC API Reference
+
+XanScope consumes these pNode RPC methods:
+
+### `get-version`
+Returns the pNode software version.
+```json
+{ "jsonrpc": "2.0", "method": "get-version", "id": 1 }
+// Response: { "result": { "version": "0.7.0" } }
+```
+
+### `get-stats`
+Returns comprehensive node statistics.
+```json
+{ "jsonrpc": "2.0", "method": "get-stats", "id": 1 }
+// Response: { "result": { "metadata": {...}, "stats": {...}, "file_size": 1048576 } }
+```
+
+### `get-pods`
+Returns all known peer pNodes in the network.
+```json
+{ "jsonrpc": "2.0", "method": "get-pods", "id": 1 }
+// Response: { "result": { "pods": [...], "total_count": 42 } }
+```
+
+---
+
+## 📦 Deployment
+
+### Vercel (Recommended)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+Set environment variables in Vercel dashboard.
+
+### Docker
+
+```bash
+docker build -t xanscope .
+docker run -p 3000:3000 xanscope
+```
+
+---
+
+## 🧪 Development
+
+```bash
+# Run dev server
+npm run dev
+
+# Type check
 npm run lint
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
-### Next Steps
+---
 
-- Replace `lib/data-service.ts` calls with real pnRPC invocations.
-- Persist filesystem ops & node snapshots in Postgres / Supabase.
-- Layer in charts (Recharts / nivo) for richer visualizations.
+## 📋 Bounty Submission
+
+This project was built for the **Xandeum pNode Analytics Platform Bounty**.
+
+### Requirements Met
+
+| Requirement | Status |
+|-------------|--------|
+| Web-based analytics platform | ✅ |
+| Retrieve pNodes via pRPC | ✅ |
+| Display pNode information | ✅ |
+| Accessible and usable | ✅ |
+| Deployment documentation | ✅ |
+
+### Innovation Highlights
+
+- 🌍 **Interactive 3D Globe** — Real-time node visualization
+- 🎨 **Premium Dark Aesthetic** — Inspired by Xandeum branding
+- 📊 **Operators Dashboard** — Personal node watchlist
+- 🔄 **Dual Architecture** — Seamless mock ↔ production toggle
+
+---
+
+## 📄 License
+
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## 🔗 Links
+
+- [Xandeum Network](https://xandeum.network)
+- [Xandeum Docs](https://docs.xandeum.network)
+- [Xandeum Discord](https://discord.gg/uqRSmmM5m)
+- [pNode Setup Guide](https://docs.xandeum.network/operator-guides)

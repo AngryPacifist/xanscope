@@ -8,6 +8,7 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapboxGlobeProps {
     className?: string;
+    contained?: boolean; // When true, uses relative positioning instead of fixed
 }
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW5ncnlwYWNpZmlzdCIsImEiOiJjbWoyNXlmZDAwams5M2dzYm5mcmUyNHAzIn0.FWl2l-P9o1badVVrzmqg4g";
@@ -27,7 +28,7 @@ const getArcCoordinates = (startId: string, endId: string) => {
 };
 
 
-export function MapboxGlobe({ className }: MapboxGlobeProps) {
+export function MapboxGlobe({ className, contained = false }: MapboxGlobeProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<any>(null);
     const isInitializedRef = useRef(false);
@@ -63,8 +64,8 @@ export function MapboxGlobe({ className }: MapboxGlobeProps) {
                 container: mapContainerRef.current!,
                 style: "mapbox://styles/mapbox/dark-v11",
                 center: [20, 20],
-                zoom: 2.1,
-                minZoom: 1.5,
+                zoom: contained ? 1.0 : 2.1, // Lower zoom in contained to show more globe
+                minZoom: contained ? 0.5 : 1.5, // Allow zooming out more in contained
                 maxZoom: 6,
                 projection: "globe" as any,
                 attributionControl: false,
@@ -79,9 +80,16 @@ export function MapboxGlobe({ className }: MapboxGlobeProps) {
 
             mapInstanceRef.current = map;
 
-            // Resize handler
-            const handleResize = () => map?.resize();
+            // Resize handler - stored for cleanup
+            const handleResize = () => {
+                if (mapInstanceRef.current) {
+                    mapInstanceRef.current.resize();
+                }
+            };
             window.addEventListener("resize", handleResize);
+
+            // Store for cleanup
+            (map as any)._resizeHandler = handleResize;
 
             // Momentum physics using easeTo for smooth inertia
             let velocityLng = 0;
@@ -305,6 +313,11 @@ export function MapboxGlobe({ className }: MapboxGlobeProps) {
         return () => {
             cancelAnimationFrame(animationRef.current);
             if (mapInstanceRef.current) {
+                // Remove resize listener
+                const handler = (mapInstanceRef.current as any)._resizeHandler;
+                if (handler) {
+                    window.removeEventListener("resize", handler);
+                }
                 mapInstanceRef.current.remove();
                 mapInstanceRef.current = null;
             }
@@ -313,7 +326,11 @@ export function MapboxGlobe({ className }: MapboxGlobeProps) {
     }, []);
 
     return (
-        <div className={cn("fixed inset-0 z-10", className)}>
+        <div className={cn(
+            // Use relative positioning when contained, otherwise fixed full-screen
+            contained ? "relative w-full h-full" : "fixed inset-0 z-10",
+            className
+        )}>
             <div
                 ref={mapContainerRef}
                 className="w-full h-full"

@@ -18,17 +18,41 @@ export function SiteHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 pointer-events-none">
-      <div className="pointer-events-auto px-6 py-4 flex items-center justify-between">
-        {/* XANSCOPE Logo - Left side, clickable to home, hidden on homepage */}
+      {/* Mobile: Centered nav */}
+      <div className="lg:hidden pointer-events-auto px-4 py-3 flex justify-center">
+        <nav className="flex items-center gap-2 px-2 py-1.5 rounded-full bg-black/60 backdrop-blur-xl border border-white/10">
+          {NAV_ITEMS.map(({ href, icon: Icon }) => {
+            const isActive = pathname === href || (href !== "/" && pathname.startsWith(href));
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "flex items-center justify-center px-3 py-2 rounded-full transition-all",
+                  isActive
+                    ? "bg-brand-cyan/20 text-brand-cyan"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <Icon size={18} />
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+
+      {/* Desktop: Full layout with brand and nav */}
+      <div className="hidden lg:flex pointer-events-auto px-6 py-4 items-center justify-between">
+        {/* XANDEUM Logo - Left side, hidden on homepage */}
         {!isHome ? (
           <Link
             href="/"
             className="font-mono text-[10px] text-brand-cyan uppercase tracking-[0.3em] hover:text-white transition-colors"
           >
-            XANSCOPE
+            XANDEUM
           </Link>
         ) : (
-          <div />
+          <div className="w-20" /> /* Spacer for balance */
         )}
 
         {/* Centered nav */}
@@ -47,7 +71,7 @@ export function SiteHeader() {
                 )}
               >
                 <Icon size={14} />
-                <span className="hidden sm:inline">{label}</span>
+                <span>{label}</span>
               </Link>
             );
           })}

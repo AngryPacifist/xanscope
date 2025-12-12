@@ -17,6 +17,16 @@ export const metadata: Metadata = {
   title: "XanScope | Xandeum Network Command Center",
   description:
     "Real-time analytics, filesystem intelligence, and operator tooling for the Xandeum decentralized storage network.",
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
+  openGraph: {
+    title: "XanScope | Xandeum Network Command Center",
+    description: "Real-time analytics for the Xandeum decentralized storage network.",
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({

@@ -20,6 +20,16 @@ const randomBetween = (min: number, max: number) => Math.random() * (max - min) 
 const randomInt = (min: number, max: number) => Math.floor(randomBetween(min, max));
 const randomPick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
 
+// Seeded random for deterministic data (ensures consistency across page loads)
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed * 9999) * 10000;
+  return x - Math.floor(x);
+};
+const seededRandomInt = (seed: number, min: number, max: number) =>
+  Math.floor(seededRandom(seed) * (max - min) + min);
+const seededPick = <T>(seed: number, arr: T[]): T =>
+  arr[Math.floor(seededRandom(seed) * arr.length)];
+
 const RELEASES = ["Heidelberg", "Stuttgart", "Ingolstadt", "Munich", "Freiburg"];
 const VERSIONS = ["0.7.0", "0.6.1", "0.6.0", "0.5.2", "0.5.0"];
 const PROVIDERS = ["AWS", "GCP", "Azure", "Hetzner", "DigitalOcean", "OVH", "Vultr", "Linode", "Scaleway"];
@@ -105,42 +115,47 @@ const generateIP = (): string => {
   return `${randomInt(10, 220)}.${randomInt(1, 255)}.${randomInt(1, 255)}.${randomInt(1, 255)}:9001`;
 };
 
-// Generate all mock nodes
-export const mockPnodes: PNode[] = NODE_LOCATIONS.map((loc, index) => {
-  const releaseIdx = randomInt(0, RELEASES.length);
-  const status = randomPick(STATUSES);
+// Generate mock nodes - fresh on each call for "live" simulation
+export function generateMockPnodes(): PNode[] {
+  return NODE_LOCATIONS.map((loc, index) => {
+    const releaseIdx = randomInt(0, RELEASES.length);
+    const status = randomPick(STATUSES);
 
-  // Performance varies by status
-  let performanceBase = 0.9;
-  let uptimeBase = 99;
-  if (status === "syncing") {
-    performanceBase = 0.8;
-    uptimeBase = 96;
-  } else if (status === "offline") {
-    performanceBase = 0.6;
-    uptimeBase = 80;
-  }
+    // Performance varies by status
+    let performanceBase = 0.9;
+    let uptimeBase = 99;
+    if (status === "syncing") {
+      performanceBase = 0.8;
+      uptimeBase = 96;
+    } else if (status === "offline") {
+      performanceBase = 0.6;
+      uptimeBase = 80;
+    }
 
-  return {
-    id: `node-${normalizeForId(loc.city)}-${String(index + 1).padStart(2, '0')}`,
-    label: generateNodeName(loc.city, index),
-    address: generateIP(),
-    region: loc.region,
-    country: loc.country,
-    provider: randomPick(PROVIDERS),
-    version: VERSIONS[releaseIdx] || VERSIONS[0],
-    release: RELEASES[releaseIdx] || RELEASES[0],
-    storageTb: randomInt(8, 32),
-    performanceScore: Math.min(0.99, performanceBase + randomBetween(-0.1, 0.08)),
-    uptimePercentage: Math.min(99.99, uptimeBase + randomBetween(-3, 1)),
-    lastHeartbeat: minutesAgo(status === "offline" ? randomInt(20, 120) : randomInt(1, 10)),
-    status,
-    latitude: loc.lat,
-    longitude: loc.lng,
-  };
-});
+    return {
+      id: `node-${normalizeForId(loc.city)}-${String(index + 1).padStart(2, '0')}`,
+      label: generateNodeName(loc.city, index),
+      address: generateIP(),
+      region: loc.region,
+      country: loc.country,
+      provider: randomPick(PROVIDERS),
+      version: VERSIONS[releaseIdx] || VERSIONS[0],
+      release: RELEASES[releaseIdx] || RELEASES[0],
+      storageTb: randomInt(8, 32),
+      performanceScore: Math.min(0.99, performanceBase + randomBetween(-0.1, 0.08)),
+      uptimePercentage: Math.min(99.99, uptimeBase + randomBetween(-3, 1)),
+      lastHeartbeat: minutesAgo(status === "offline" ? randomInt(20, 120) : randomInt(1, 10)),
+      status,
+      latitude: loc.lat,
+      longitude: loc.lng,
+    };
+  });
+}
 
-// Export for globe component
+// Static export for backward compatibility (globe, etc.)
+export const mockPnodes = generateMockPnodes();
+
+// Export for globe component - uses the generated nodes
 export const GLOBE_NODES = mockPnodes.map(node => ({
   id: node.id,
   lat: node.latitude!,
