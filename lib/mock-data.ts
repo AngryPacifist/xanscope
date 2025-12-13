@@ -265,6 +265,15 @@ export const mockNetworkOverview: NetworkOverview = {
     { name: "Africa", nodes: 5, online: 4, capacityTb: 80 },
     { name: "Oceania", nodes: 3, online: 3, capacityTb: 48 },
   ],
+  // Real data fields
+  storageUsedTb: 354.5,  // ~42% of mock capacity
+  totalStoragePb: 0.84,
+  avgStorageUsagePercent: 42.5,
+  networkHealthPercent: 98,
+  avgUptimeDays: 12.5,
+  latestVersionPercent: 85,
+  requestsServed: 125000,
+  bytesTransferred: 5368709120, // ~5GB
 };
 
 export const mockFsSummaries: FileSystemSummary[] = [
@@ -620,3 +629,44 @@ export const mockActivityFeed: ActivityFeedItem[] = [
     severity: "critical",
   },
 ];
+
+// Rich mock generator for dashboard live feed (matches deployed variety)
+const MOCK_FEED_TEMPLATES = [
+  // City-based events
+  { title: "Tokyo Hub synced", description: "Block height: 1,247,891" },
+  { title: "NYC Gateway heartbeat", description: "Latency: 12ms avg" },
+  { title: "London Node verified", description: "Performance score: 0.98" },
+  { title: "Frankfurt Server online", description: "Connection stable" },
+  { title: "Singapore Relay synced", description: "Storage: 2.4TB synced" },
+  { title: "Sydney Cluster verified", description: "Consensus reached" },
+  { title: "Mumbai Core heartbeat", description: "Response time: 8ms" },
+  { title: "Toronto Bridge online", description: "Peer count: 156" },
+  { title: "Amsterdam Vault synced", description: "Shard replication complete" },
+  { title: "Seoul Mirror verified", description: "Signature valid" },
+
+  // Standalone action events (variety - not city-based)
+  { title: "Storage allocation", description: "Storage: 2.4TB allocated" },
+  { title: "Peer discovery", description: "Gossip round complete" },
+  { title: "Block propagated", description: "Block height: 1,247,891" },
+  { title: "Shard replicated", description: "Replication factor: 3x" },
+  { title: "Validator online", description: "Uptime: 99.9%" },
+  { title: "Consensus reached", description: "Network synchronized" },
+  { title: "Gossip round complete", description: "All nodes responding" },
+  { title: "Network sync", description: "Peers synchronized" },
+  { title: "Health check passed", description: "All systems operational" },
+  { title: "Large write detected", description: "3.2 GB appended" },
+];
+
+export function generateMockFeedItem(): ActivityFeedItem {
+  const template = randomPick(MOCK_FEED_TEMPLATES);
+
+  return {
+    id: `mock-${Date.now()}-${Math.random()}`,
+    type: "node",
+    title: template.title,
+    description: template.description,
+    timestamp: new Date().toISOString(),
+    severity: "info",
+  };
+}
+

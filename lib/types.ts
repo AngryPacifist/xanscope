@@ -36,6 +36,8 @@ export interface PNodeStats {
   packets_received: number;
   packets_sent: number;
   active_streams: number;
+  requests_served?: number;
+  bytes_transferred?: number;
 }
 
 // UI-friendly normalized Node
@@ -94,6 +96,15 @@ export interface NetworkOverview {
     online: number;
     capacityTb: number;
   }>;
+  // Real data fields
+  storageUsedTb: number;  // Actual storage used in TB
+  totalStoragePb: number;  // Total storage in PB
+  avgStorageUsagePercent: number;  // Average storage usage across all nodes
+  networkHealthPercent: number;  // Composite health score
+  avgUptimeDays: number;  // Average node uptime in days
+  latestVersionPercent: number;  // % of nodes on latest version
+  requestsServed: number;  // From get-stats
+  bytesTransferred: number;  // From get-stats (in bytes)
 }
 
 export interface LeaderboardEntry {

@@ -6,33 +6,23 @@ import { HolographicCard, MetricValue } from "@/components/ui/holographic-card";
 import { MapboxGlobe } from "@/components/visuals/mapbox-globe";
 import { Starfield } from "@/components/visuals/starfield";
 import { HudOverlay } from "@/components/visuals/hud-overlay";
+import { generateMockFeedItem } from "@/lib/mock-data";
 import type { NetworkOverview, ActivityFeedItem } from "@/lib/types";
+
+// Format bytes to human readable
+function formatBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 ** 2) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 ** 3) return `${(bytes / 1024 ** 2).toFixed(1)} MB`;
+    if (bytes < 1024 ** 4) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;
+    return `${(bytes / 1024 ** 4).toFixed(2)} TB`;
+}
 
 type Props = {
     initialOverview: NetworkOverview;
     initialActivity: ActivityFeedItem[];
 };
 
-// Fallback mock generator for when API returns no events
-const generateMockFeedItem = (): ActivityFeedItem => {
-    const titles = [
-        "Gossip round complete", "Peer discovery", "Network sync",
-        "Heartbeat received", "Replication check", "Health probe",
-    ];
-    const descriptions = [
-        "All nodes responding", "Network healthy", "Gossip protocol active",
-        "Peers synchronized", "Storage verified", "Latency nominal",
-    ];
-
-    return {
-        id: `mock-${Date.now()}-${Math.random()}`,
-        type: "node",
-        title: titles[Math.floor(Math.random() * titles.length)],
-        description: descriptions[Math.floor(Math.random() * descriptions.length)],
-        timestamp: new Date().toISOString(),
-        severity: "info",
-    };
-};
 
 // Corner accent component for the mobile globe container
 function CornerAccents() {
@@ -67,10 +57,9 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                 setActivity(prev => [...data.events, ...prev].slice(0, 15));
                 setIsLive(true);
             } else if (data.mock) {
-                // In mock mode, generate a random event occasionally
-                if (Math.random() < 0.4) {
-                    setActivity(prev => [generateMockFeedItem(), ...prev].slice(0, 15));
-                }
+                // In mock mode, always generate an event for demo purposes
+                setActivity(prev => [generateMockFeedItem(), ...prev].slice(0, 15));
+                setIsLive(false);
             }
         } catch (err) {
             console.warn("Feed fetch failed:", err);
@@ -84,10 +73,10 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
         return () => clearInterval(timer);
     }, []);
 
-    // Poll feed API every 15 seconds
+    // Poll feed API every 5 seconds for responsive updates
     useEffect(() => {
         fetchFeed(); // Initial fetch
-        const feedInterval = setInterval(fetchFeed, 15000);
+        const feedInterval = setInterval(fetchFeed, 5000);
         return () => clearInterval(feedInterval);
     }, [fetchFeed]);
 
@@ -251,7 +240,6 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                                     <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Active Nodes</span>
                                 </div>
                                 <MetricValue value={overview.onlineNodes.toString()} label="" />
-                                <div className="mt-2 text-[10px] font-mono text-white/50">of {overview.totalNodes} total nodes</div>
                             </HolographicCard>
 
                             <HolographicCard className="backdrop-blur-xl bg-black/50">
@@ -262,8 +250,9 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                                     <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Storage</span>
                                 </div>
                                 <MetricValue value={`${overview.capacityTb.toFixed(2)} TB`} label="" />
-                                <div className="mt-3 h-3 bg-white/10 rounded-full overflow-hidden">
-                                    <div className="h-full w-2/3 bg-gradient-to-r from-[#00E0FF] via-[#7C3AED] to-[#A855F7] rounded-full shadow-[0_0_10px_rgba(0,224,255,0.5)]" />
+                                <div className="mt-2 text-[9px] font-mono text-white/40">{overview.storageUsedTb} TB used</div>
+                                <div className="mt-1 h-3 bg-white/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-gradient-to-r from-[#00E0FF] via-[#7C3AED] to-[#A855F7] rounded-full shadow-[0_0_10px_rgba(0,224,255,0.5)]" style={{ width: `${Math.min(overview.capacityTb > 0 ? (overview.storageUsedTb / overview.capacityTb) * 100 : 0, 100)}%` }} />
                                 </div>
                             </HolographicCard>
 
@@ -334,11 +323,13 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
                         <div className="flex gap-3">
                             {[
-                                { icon: Activity, value: "8ms", label: "Read Latency" },
-                                { icon: BarChart3, value: "2.4 GB/s", label: "Throughput" },
-                                { icon: Network, value: "3x", label: "Replication" },
-                                { icon: HardDrive, value: `${(overview.capacityTb / 1000).toFixed(2)} PB`, label: "Total Data" },
-                                { icon: Cpu, value: `${(overview.averagePerformance * 100).toFixed(0)}%`, label: "Network Health" },
+                                { icon: Network, value: overview.totalNodes.toString(), label: "Total Nodes" },
+                                { icon: BarChart3, value: `${overview.avgStorageUsagePercent}%`, label: "Avg Usage" },
+                                { icon: Cpu, value: `${overview.networkHealthPercent}%`, label: "Network Health" },
+                                { icon: Activity, value: `${overview.avgUptimeDays}d`, label: "Avg Uptime" },
+                                { icon: Zap, value: `${overview.latestVersionPercent}%`, label: "Latest Version" },
+                                { icon: Database, value: overview.requestsServed.toLocaleString(), label: "Gateway Requests" },
+                                { icon: HardDrive, value: formatBytes(overview.bytesTransferred), label: "Gateway Data" },
                             ].map(({ icon: Icon, value, label }) => (
                                 <div key={label} className="px-4 py-3 bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-3">
                                     <Icon size={18} className="text-brand-cyan/70" />

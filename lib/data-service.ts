@@ -175,12 +175,14 @@ export async function fetchNetworkOverview(): Promise<NetworkOverview> {
     // Compute dynamically from fresh mock data
     const nodes = generateMockPnodes();
     const now = new Date();
+    const totalStorageTb = nodes.reduce((acc, node) => acc + node.storageTb, 0);
+    const mockUsedTb = totalStorageTb * 0.42; // 42% usage for mock
     return {
       totalNodes: nodes.length,
       onlineNodes: nodes.filter((n) => n.status === "online").length,
       offlineNodes: nodes.filter((n) => n.status === "offline").length,
       syncingNodes: nodes.filter((n) => n.status === "syncing").length,
-      capacityTb: nodes.reduce((acc, node) => acc + node.storageTb, 0),
+      capacityTb: totalStorageTb,
       releases: nodes.reduce<Record<string, number>>((acc, node) => {
         acc[node.release] = (acc[node.release] ?? 0) + 1;
         return acc;
@@ -192,6 +194,15 @@ export async function fetchNetworkOverview(): Promise<NetworkOverview> {
       uptimePercent: 99.9,
       totalFilesystems: 24,
       regions: [],
+      // Mock values for stats
+      storageUsedTb: Math.round(mockUsedTb * 100) / 100,
+      totalStoragePb: Math.round(totalStorageTb / 1024 * 100) / 100,
+      avgStorageUsagePercent: 42.5,
+      networkHealthPercent: 98,
+      avgUptimeDays: 12.5,
+      latestVersionPercent: 85,
+      requestsServed: 125000,
+      bytesTransferred: 5368709120, // ~5GB
     };
   }
 
@@ -207,21 +218,64 @@ export async function fetchNetworkOverview(): Promise<NetworkOverview> {
       versionCounts[pod.version] = (versionCounts[pod.version] || 0) + 1;
     });
 
-    // Calculate total storage
+    // Calculate total storage (bytes -> TB -> PB)
     const totalStorageBytes = pods.reduce((sum, p) => sum + p.storage_committed, 0);
+    const totalStorageTb = totalStorageBytes / (1024 ** 4);
+    const totalStoragePb = totalStorageTb / 1024;
+
+    // Calculate actual storage used (sum of all storage_used)
+    const totalUsedBytes = pods.reduce((sum, p) => sum + (p.storage_used || 0), 0);
+    const storageUsedTb = totalUsedBytes / (1024 ** 4);
+
+    // Calculate average storage usage across all nodes
+    const avgStorageUsage = pods.length > 0
+      ? pods.reduce((sum, p) => sum + (p.storage_usage_percent || 0), 0) / pods.length
+      : 0;
+
+    // Calculate network health score:
+    // - Base 100% if all nodes responding
+    // - Penalize if avg storage usage > 80% (risk of full)
+    // - All nodes in gossip = considered healthy
+    const storageHealthPenalty = avgStorageUsage > 80 ? (avgStorageUsage - 80) * 2 : 0;
+    const networkHealth = Math.max(0, Math.min(100, 100 - storageHealthPenalty));
+
+    // Calculate average uptime in days
+    const avgUptimeSeconds = pods.length > 0
+      ? pods.reduce((sum, p) => sum + (p.uptime || 0), 0) / pods.length
+      : 0;
+    const avgUptimeDays = avgUptimeSeconds / 86400; // Convert seconds to days
+
+    // Calculate % of nodes on latest version
+    const versionList = Object.entries(versionCounts).sort((a, b) => b[0].localeCompare(a[0]));
+    const latestVersion = versionList[0]?.[0] || '';
+    const latestVersionCount = versionCounts[latestVersion] || 0;
+    const latestVersionPercent = pods.length > 0 ? (latestVersionCount / pods.length) * 100 : 0;
+
+    // Get requests served and bytes transferred from get-stats
+    const requestsServed = stats?.stats?.requests_served ?? 0;
+    const bytesTransferred = stats?.stats?.bytes_transferred ?? 0;
 
     return {
       totalNodes: pods.length,
-      onlineNodes: pods.length, // Assuming all in gossip are "online"
+      onlineNodes: pods.length, // All in gossip are "online"
       offlineNodes: 0,
       syncingNodes: 0,
-      capacityTb: Math.round(totalStorageBytes / (1024 ** 4) * 100) / 100,
+      capacityTb: Math.round(totalStorageTb * 100) / 100,
       releases: versionCounts,
       averagePerformance: 0.98,
       lastUpdated: new Date().toISOString(),
       uptimePercent: 99.9,
       totalFilesystems: stats?.metadata?.total_pages ?? 0,
-      regions: []
+      regions: [],
+      // Real data fields
+      storageUsedTb: Math.round(storageUsedTb * 100) / 100,
+      totalStoragePb: Math.round(totalStoragePb * 100) / 100,
+      avgStorageUsagePercent: Math.round(avgStorageUsage * 10) / 10,
+      networkHealthPercent: Math.round(networkHealth),
+      avgUptimeDays: Math.round(avgUptimeDays * 10) / 10,
+      latestVersionPercent: Math.round(latestVersionPercent),
+      requestsServed,
+      bytesTransferred,
     };
   } catch (err) {
     console.warn("Failed to fetch network overview, using mock fallback:", err);
