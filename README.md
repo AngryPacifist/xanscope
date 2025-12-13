@@ -313,7 +313,7 @@ This project was built for the **Xandeum pNode Analytics Platform Bounty**.
 
 ## 📄 License
 
-MIT License — see [LICENSE](https://opensource.org/license/MIT) for details.
+MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
