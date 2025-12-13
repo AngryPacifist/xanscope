@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Activity, HardDrive, Network, Zap, Database, Cpu, BarChart3 } from "lucide-react";
 import { HolographicCard, MetricValue } from "@/components/ui/holographic-card";
 import { MapboxGlobe } from "@/components/visuals/mapbox-globe";
@@ -13,19 +13,19 @@ type Props = {
     initialActivity: ActivityFeedItem[];
 };
 
-const generateFeedItem = (): ActivityFeedItem => {
+// Fallback mock generator for when API returns no events
+const generateMockFeedItem = (): ActivityFeedItem => {
     const titles = [
-        "Tokyo Hub synced", "NYC Gateway heartbeat", "London Node verified",
-        "Storage allocation", "Peer discovery", "Block propagated",
-        "Shard replicated", "Validator online", "Consensus reached",
+        "Gossip round complete", "Peer discovery", "Network sync",
+        "Heartbeat received", "Replication check", "Health probe",
     ];
     const descriptions = [
-        "Performance score: 0.98", "Latency: 12ms avg", "Storage: 2.4TB allocated",
-        "Replication factor: 3x", "Gossip round complete", "Block height: 1,247,891",
+        "All nodes responding", "Network healthy", "Gossip protocol active",
+        "Peers synchronized", "Storage verified", "Latency nominal",
     ];
 
     return {
-        id: `feed-${Date.now()}-${Math.random()}`,
+        id: `mock-${Date.now()}-${Math.random()}`,
         type: "node",
         title: titles[Math.floor(Math.random() * titles.length)],
         description: descriptions[Math.floor(Math.random() * descriptions.length)],
@@ -51,10 +51,31 @@ function CornerAccents() {
 }
 
 export function DashboardClient({ initialOverview, initialActivity }: Props) {
-    const [overview] = useState<NetworkOverview>(initialOverview);
+    const [overview, setOverview] = useState<NetworkOverview>(initialOverview);
     const [activity, setActivity] = useState<ActivityFeedItem[]>(initialActivity);
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
+    const [isLive, setIsLive] = useState(false);
+
+    // Fetch live feed from API
+    const fetchFeed = useCallback(async () => {
+        try {
+            const res = await fetch('/api/feed');
+            const data = await res.json();
+
+            if (!data.mock && data.events?.length > 0) {
+                setActivity(prev => [...data.events, ...prev].slice(0, 15));
+                setIsLive(true);
+            } else if (data.mock) {
+                // In mock mode, generate a random event occasionally
+                if (Math.random() < 0.4) {
+                    setActivity(prev => [generateMockFeedItem(), ...prev].slice(0, 15));
+                }
+            }
+        } catch (err) {
+            console.warn("Feed fetch failed:", err);
+        }
+    }, []);
 
     useEffect(() => {
         setMounted(true);
@@ -63,12 +84,12 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
         return () => clearInterval(timer);
     }, []);
 
+    // Poll feed API every 15 seconds
     useEffect(() => {
-        const feedInterval = setInterval(() => {
-            setActivity(prev => [generateFeedItem(), ...prev.slice(0, 9)]);
-        }, 4000);
+        fetchFeed(); // Initial fetch
+        const feedInterval = setInterval(fetchFeed, 15000);
         return () => clearInterval(feedInterval);
-    }, []);
+    }, [fetchFeed]);
 
     // Format time safely (only on client after mount)
     const timeString = mounted && currentTime
@@ -77,6 +98,7 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
     const tzOffset = mounted && currentTime
         ? `UTC${currentTime.getTimezoneOffset() <= 0 ? '+' : ''}${-currentTime.getTimezoneOffset() / 60}`
         : '';
+
 
     return (
         <>
