@@ -9,7 +9,7 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 
 > 🏆 **Built for the Xandeum pNode Analytics Platform Bounty**
 
-![XanScope Dashboard](public/og-image.png)
+![XanScope Dashboard](public/dashboard.png)
 
 ---
 
@@ -28,10 +28,20 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 ## ✨ Features
 
 ### Dashboard
-- **Network Overview** — Live stats: total nodes, online/offline counts, storage capacity
-- **Interactive Globe** — Mapbox-powered 3D globe showing global pNode distribution
-- **Activity Feed** — Real-time stream of network events
-- **Leaderboard** — Top performing nodes by uptime and reliability
+- **Network Overview** — Live stats: total nodes, storage capacity, average usage, network health
+- **Interactive Globe** — Mapbox-powered 3D globe with real IP-based geo-location (via ip-api.com)
+- **Activity Feed** — Real-time stream of network events (live pRPC data or mock)
+- **Leaderboard** — Top performing nodes ranked by uptime
+- **Gateway Metrics** — Requests served and data transferred via connected gateway node
+
+### Bottom Stats Bar
+- **Total Nodes** — Count of all nodes in the gossip network
+- **Avg Usage** — Average storage usage across all nodes
+- **Network Health** — Composite health score based on storage capacity
+- **Avg Uptime** — Average uptime in days across all nodes
+- **Latest Version** — Percentage of nodes on the newest version
+- **Gateway Requests** — Total RPC requests handled by the gateway pNode
+- **Gateway Data** — Cumulative bytes transferred through gateway
 
 ### Nodes Explorer
 - **Searchable Grid** — Filter by region, status, version, provider
@@ -39,7 +49,7 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 - **Performance History** — Timeline charts for each node
 
 ![pNode Explorer with Live Data](public/nodes-live-data.png)
-*Nodes Explorer displaying real data from 159 pNodes on the Xandeum network*
+*Nodes Explorer displaying real data from 162+ pNodes on the Xandeum network*
 
 ### Filesystem Analytics
 - **FS Summaries** — Overview of all registered filesystems
@@ -71,9 +81,10 @@ XanScope uses a **Dual-Client Architecture** to support both development (mock d
 │           ▼ (when PRPC_ENDPOINT is set)                     │
 │   ┌─────────────────┐         ┌─────────────────┐           │
 │   │   prpc-client   │────────▶│  pNode RPC      │ Port 6000 │
-│   │  get-pods       │         │  (JSON-RPC 2.0) │           │
-│   │  get-stats      │         └─────────────────┘           │
-│   │  get-version    │                                        │
+│   │  get-stats      │         │  (JSON-RPC 2.0) │           │
+│   │  get-version    │         └─────────────────┘           │
+│   │  get-pods-with- │                                        │
+│   │     stats       │                                        │
 │   └─────────────────┘                                        │
 │                                                              │
 │   ┌─────────────────┐         ┌─────────────────┐           │
@@ -159,28 +170,35 @@ To connect to a real pNode:
 ```
 xanscope/
 ├── app/                    # Next.js App Router pages
+│   ├── api/                # API routes (feed, analytics, node-locations)
 │   ├── page.tsx            # Dashboard home
 │   ├── nodes/              # Nodes explorer + detail pages
 │   ├── fs/                 # Filesystem analytics
-│   ├── operators/          # Personal operator dashboard
-│   ├── network/            # Network-wide stats
-│   └── insights/           # Analytics & charts
+│   └── operators/          # Personal operator dashboard
 ├── components/
+│   ├── dashboard/          # Dashboard-specific components
 │   ├── ui/                 # Base UI primitives (Card, Button, etc.)
-│   ├── layout/             # Header, sidebar, navigation
-│   ├── visuals/            # Globe, charts, animations
+│   ├── layout/             # Header, navigation
+│   ├── visuals/            # Globe, starfield, HUD overlay
 │   ├── nodes/              # Node-specific components
+│   ├── operators/          # Operator dashboard components
 │   └── fs/                 # Filesystem components
+├── docs/                   # Documentation
+│   ├── GETTING-STARTED.md
+│   ├── CONNECTING-PNODE.md
+│   ├── DEPLOYMENT.md
+│   ├── API-REFERENCE.md
+│   └── ARCHITECTURE.md
 ├── lib/
 │   ├── data-service.ts     # Data aggregation layer
 │   ├── prpc-client.ts      # pNode RPC client
 │   ├── xandeum-client.ts   # Solana/Xandeum RPC client
 │   ├── mock-data.ts        # Development mock data
-│   └── types.ts            # TypeScript interfaces
+│   ├── types.ts            # TypeScript interfaces
+│   └── utils.ts            # Utility functions
 └── public/
-    ├── Brief.md            # Bounty requirements
-    ├── XANDEUM API.md      # API documentation
-    └── XANDEUM.md          # Xandeum overview
+    ├── dashboard.png       # Dashboard screenshot
+    └── nodes-live-data.png # Nodes explorer screenshot
 ```
 
 ---
@@ -216,11 +234,11 @@ Returns comprehensive node statistics.
 // Response: { "result": { "metadata": {...}, "stats": {...}, "file_size": 1048576 } }
 ```
 
-### `get-pods`
-Returns all known peer pNodes in the network.
+### `get-pods-with-stats`
+Returns all known peer pNodes with extended statistics (uptime, storage, version).
 ```json
-{ "jsonrpc": "2.0", "method": "get-pods", "id": 1 }
-// Response: { "result": { "pods": [...], "total_count": 42 } }
+{ "jsonrpc": "2.0", "method": "get-pods-with-stats", "id": 1 }
+// Response: { "result": { "pods": [{"address": "...", "uptime": 123456, "storage_used": ..., "version": "0.7.0"}, ...] } }
 ```
 
 ---
@@ -282,16 +300,20 @@ This project was built for the **Xandeum pNode Analytics Platform Bounty**.
 
 ### Innovation Highlights
 
-- 🌍 **Interactive 3D Globe** — Real-time node visualization
+- 🌍 **Interactive 3D Globe** — Real-time node visualization with IP geo-location
 - 🎨 **Premium Dark Aesthetic** — Inspired by Xandeum branding
 - 📊 **Operators Dashboard** — Personal node watchlist
 - 🔄 **Dual Architecture** — Seamless mock ↔ production toggle
+- 📍 **Real IP Geo-Location** — Nodes positioned on globe using ip-api.com batch lookup
+- 🏆 **Live Leaderboard** — Top nodes ranked by uptime in real-time
+- 🚀 **Gateway Metrics** — Unique insight into RPC requests and data transfer
+- ⏱️ **5-Minute Refresh** — Globe data refreshes every 5 minutes for live updates
 
 ---
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE) for details.
+MIT License — see [LICENSE](https://opensource.org/license/MIT) for details.
 
 ---
 
