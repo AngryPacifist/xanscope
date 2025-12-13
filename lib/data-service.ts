@@ -220,7 +220,7 @@ export async function fetchNetworkOverview(): Promise<NetworkOverview> {
       averagePerformance: 0.98,
       lastUpdated: new Date().toISOString(),
       uptimePercent: 99.9,
-      totalFilesystems: stats.metadata.total_pages || 0,
+      totalFilesystems: stats?.metadata?.total_pages ?? 0,
       regions: []
     };
   } catch (err) {
