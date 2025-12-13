@@ -41,7 +41,7 @@ export async function GET() {
                         title: `New node joined`,
                         description: `${address.split(':')[0]} (v${pod.version})`,
                         timestamp: now,
-                        severity: "success",
+                        severity: "info",
                     });
                 }
             }
