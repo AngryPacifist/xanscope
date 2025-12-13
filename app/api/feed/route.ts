@@ -83,7 +83,7 @@ export async function GET() {
                     const formatted = formatBytes(Math.abs(diff));
                     events.push({
                         id: `storage-${Date.now()}`,
-                        type: "storage",
+                        type: "network",
                         title: diff > 0 ? `Storage increased` : `Storage decreased`,
                         description: `${diff > 0 ? '+' : '-'}${formatted}`,
                         timestamp: now,
