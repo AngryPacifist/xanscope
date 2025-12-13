@@ -331,7 +331,7 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                                 { icon: Database, value: overview.requestsServed.toLocaleString(), label: "Gateway Requests" },
                                 { icon: HardDrive, value: formatBytes(overview.bytesTransferred), label: "Gateway Data" },
                             ].map(({ icon: Icon, value, label }) => (
-                                <div key={label} className="px-4 py-3 bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-3">
+                                <div key={label} className="px-6 py-3 bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-3">
                                     <Icon size={18} className="text-brand-cyan/70" />
                                     <div>
                                         <div className="font-mono text-lg font-bold text-white tabular-nums">{value}</div>

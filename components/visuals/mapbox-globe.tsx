@@ -8,13 +8,50 @@ import "mapbox-gl/dist/mapbox-gl.css";
 
 interface MapboxGlobeProps {
     className?: string;
-    contained?: boolean; // When true, uses relative positioning instead of fixed
+    contained?: boolean;
+}
+
+interface NodeLocation {
+    ip: string;
+    lat: number;
+    lng: number;
+    city: string;
+    country: string;
+    version: string;
 }
 
 const MAPBOX_TOKEN = "pk.eyJ1IjoiYW5ncnlwYWNpZmlzdCIsImEiOiJjbWoyNXlmZDAwams5M2dzYm5mcmUyNHAzIn0.FWl2l-P9o1badVVrzmqg4g";
 
-// Use data from mock-data.ts
-const NODES = GLOBE_NODES;
+// Generate arcs between nearby nodes (for visual effect)
+function generateArcs(nodes: NodeLocation[]): [number, number][][] {
+    const arcs: [number, number][][] = [];
+    const maxDistance = 50; // degrees
+
+    for (let i = 0; i < nodes.length; i++) {
+        // Connect each node to 1-3 nearest nodes
+        const distances: { idx: number; dist: number }[] = [];
+        for (let j = 0; j < nodes.length; j++) {
+            if (i === j) continue;
+            const dist = Math.sqrt(
+                Math.pow(nodes[i].lat - nodes[j].lat, 2) +
+                Math.pow(nodes[i].lng - nodes[j].lng, 2)
+            );
+            if (dist < maxDistance) {
+                distances.push({ idx: j, dist });
+            }
+        }
+        distances.sort((a, b) => a.dist - b.dist);
+        const connections = Math.min(2, distances.length);
+        for (let k = 0; k < connections; k++) {
+            const j = distances[k].idx;
+            // Avoid duplicate arcs
+            if (i < j) {
+                arcs.push([[nodes[i].lng, nodes[i].lat], [nodes[j].lng, nodes[j].lat]]);
+            }
+        }
+    }
+    return arcs;
+}
 
 // Build arcs GeoJSON from mock data
 const getArcCoordinates = (startId: string, endId: string) => {
@@ -34,6 +71,25 @@ export function MapboxGlobe({ className, contained = false }: MapboxGlobeProps) 
     const isInitializedRef = useRef(false);
     const animationRef = useRef<number>(0);
     const [mapLoaded, setMapLoaded] = useState(false);
+    const [realNodes, setRealNodes] = useState<NodeLocation[]>([]);
+    const nodesLoadedRef = useRef(false);
+    const dashOffsetRef = useRef(0);
+
+    // Fetch real node locations on mount
+    useEffect(() => {
+        if (nodesLoadedRef.current) return;
+        nodesLoadedRef.current = true;
+
+        fetch("/api/node-locations")
+            .then(res => res.json())
+            .then(data => {
+                if (data.nodes && data.nodes.length > 0) {
+                    setRealNodes(data.nodes);
+                    console.log(`[Globe] Loaded ${data.nodes.length} real node locations`);
+                }
+            })
+            .catch(err => console.warn("[Globe] Failed to load node locations:", err));
+    }, []);
 
     useEffect(() => {
         // Prevent double initialization (React StrictMode)
@@ -204,31 +260,44 @@ export function MapboxGlobe({ className, contained = false }: MapboxGlobeProps) 
                     map.setPaintProperty("admin-1-boundary", "line-opacity", 0.15);
                 }
 
-                // Data sources
+                // Data sources - use real nodes when available, fall back to mock
+                const useRealData = realNodes.length > 0;
+
                 const nodesGeoJSON = {
                     type: "FeatureCollection",
-                    features: NODES.map(node => ({
-                        type: "Feature",
-                        properties: { id: node.id, status: node.status },
-                        geometry: { type: "Point", coordinates: [node.lng, node.lat] },
-                    })),
+                    features: useRealData
+                        ? realNodes.map((node, idx) => ({
+                            type: "Feature",
+                            properties: { id: node.ip, city: node.city, country: node.country },
+                            geometry: { type: "Point", coordinates: [node.lng, node.lat] },
+                        }))
+                        : GLOBE_NODES.map(node => ({
+                            type: "Feature",
+                            properties: { id: node.id, status: node.status },
+                            geometry: { type: "Point", coordinates: [node.lng, node.lat] },
+                        })),
                 };
 
+                // Arcs: only show in mock mode (no real traffic data available)
                 const arcsGeoJSON = {
                     type: "FeatureCollection",
-                    features: GLOBE_ARCS.map(([startId, endId]: [string, string]) => {
-                        const coords = getArcCoordinates(startId, endId);
-                        if (!coords) return null;
-                        return {
-                            type: "Feature",
-                            properties: {},
-                            geometry: {
-                                type: "LineString",
-                                coordinates: [[coords.start.lng, coords.start.lat], [coords.end.lng, coords.end.lat]],
-                            },
-                        };
-                    }).filter(Boolean),
+                    features: useRealData
+                        ? [] // No arcs for real data - we don't have traffic info
+                        : GLOBE_ARCS.map(([startId, endId]: [string, string]) => {
+                            const coords = getArcCoordinates(startId, endId);
+                            if (!coords) return null;
+                            return {
+                                type: "Feature",
+                                properties: {},
+                                geometry: {
+                                    type: "LineString",
+                                    coordinates: [[coords.start.lng, coords.start.lat], [coords.end.lng, coords.end.lat]],
+                                },
+                            };
+                        }).filter(Boolean),
                 };
+
+                console.log(`[Globe] Using ${useRealData ? 'real' : 'mock'} data: ${nodesGeoJSON.features.length} nodes, ${arcsGeoJSON.features.length} arcs`);
 
                 map.addSource("nodes", { type: "geojson", data: nodesGeoJSON as any });
                 map.addSource("arcs", { type: "geojson", data: arcsGeoJSON as any });
@@ -299,9 +368,15 @@ export function MapboxGlobe({ className, contained = false }: MapboxGlobeProps) 
                         map.setCenter([currentLng, map.getCenter().lat]);
                     }
 
+                    // Node glow pulse
                     const pulse = Math.sin(time * 0.003);
                     map.setPaintProperty("node-glow", "circle-radius", 16 + pulse * 6);
                     map.setPaintProperty("node-glow", "circle-opacity", 0.35 + pulse * 0.15);
+
+                    // Animate arc streaming effect
+                    dashOffsetRef.current = (dashOffsetRef.current + delta * 0.01) % 5;
+                    const dashPhase = dashOffsetRef.current;
+                    map.setPaintProperty("arc-stream", "line-dasharray", [1, 4 - dashPhase * 0.5]);
 
                     animationRef.current = requestAnimationFrame(animate);
                 };
@@ -324,6 +399,41 @@ export function MapboxGlobe({ className, contained = false }: MapboxGlobeProps) 
             isInitializedRef.current = false;
         };
     }, []);
+
+    // Update map data when realNodes changes
+    useEffect(() => {
+        if (!mapInstanceRef.current || !mapLoaded) return;
+        if (realNodes.length === 0) return;
+
+        const map = mapInstanceRef.current;
+
+        // Build updated GeoJSON
+        const nodesGeoJSON = {
+            type: "FeatureCollection",
+            features: realNodes.map((node) => ({
+                type: "Feature",
+                properties: { id: node.ip, city: node.city, country: node.country },
+                geometry: { type: "Point", coordinates: [node.lng, node.lat] },
+            })),
+        };
+
+        const arcsGeoJSON = {
+            type: "FeatureCollection",
+            features: [], // No arcs for real data - we don't have traffic info
+        };
+
+        // Update sources
+        const nodesSource = map.getSource("nodes");
+        const arcsSource = map.getSource("arcs");
+
+        if (nodesSource) {
+            nodesSource.setData(nodesGeoJSON);
+            console.log(`[Globe] Updated to ${realNodes.length} real nodes`);
+        }
+        if (arcsSource) {
+            arcsSource.setData(arcsGeoJSON);
+        }
+    }, [realNodes, mapLoaded]);
 
     return (
         <div className={cn(
