@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Activity, HardDrive, Network, Zap, Database, Cpu, BarChart3 } from "lucide-react";
+import { Activity, HardDrive, Network, Zap, Database, Cpu, BarChart3, Trophy } from "lucide-react";
 import { HolographicCard, MetricValue } from "@/components/ui/holographic-card";
 import { MapboxGlobe } from "@/components/visuals/mapbox-globe";
 import { Starfield } from "@/components/visuals/starfield";
 import { HudOverlay } from "@/components/visuals/hud-overlay";
 import { generateMockFeedItem } from "@/lib/mock-data";
-import type { NetworkOverview, ActivityFeedItem } from "@/lib/types";
+import type { NetworkOverview, ActivityFeedItem, LeaderboardEntry } from "@/lib/types";
 
 // Format bytes to human readable
 function formatBytes(bytes: number): string {
@@ -21,6 +21,7 @@ function formatBytes(bytes: number): string {
 type Props = {
     initialOverview: NetworkOverview;
     initialActivity: ActivityFeedItem[];
+    initialLeaderboard: LeaderboardEntry[];
 };
 
 
@@ -40,9 +41,10 @@ function CornerAccents() {
     );
 }
 
-export function DashboardClient({ initialOverview, initialActivity }: Props) {
+export function DashboardClient({ initialOverview, initialActivity, initialLeaderboard }: Props) {
     const [overview, setOverview] = useState<NetworkOverview>(initialOverview);
     const [activity, setActivity] = useState<ActivityFeedItem[]>(initialActivity);
+    const [leaderboard] = useState<LeaderboardEntry[]>(initialLeaderboard);
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
     const [mounted, setMounted] = useState(false);
     const [isLive, setIsLive] = useState(false);
@@ -277,8 +279,8 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                             </HolographicCard>
                         </div>
 
-                        {/* Right Column - Activity Feed */}
-                        <div className="w-72 xl:w-80 pointer-events-auto">
+                        {/* Right Column - Activity Feed + Leaderboard */}
+                        <div className="w-76 xl:w-[22rem] pointer-events-auto flex flex-col gap-4">
                             <HolographicCard className="backdrop-blur-xl bg-black/50">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
@@ -291,16 +293,16 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 max-h-[320px] overflow-hidden relative">
-                                    {activity.slice(0, 7).map((item, index) => (
+                                <div className="space-y-2 max-h-[290px] overflow-hidden relative">
+                                    {activity.slice(0, 6).map((item, index) => (
                                         <div
                                             key={item.id}
                                             className="p-2.5 rounded bg-white/5 border border-white/5 hover:border-brand-cyan/30 transition-all"
-                                            style={{ opacity: 1 - (index * 0.1) }}
+                                            style={{ opacity: 1 - (index * 0.15) }}
                                         >
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="font-mono text-[11px] text-white font-medium truncate">
+                                                    <div className="font-mono text-[11.5px] text-white font-medium truncate">
                                                         {item.title}
                                                     </div>
                                                     <div className="font-mono text-[9px] text-white/80 mt-0.5">
@@ -313,7 +315,43 @@ export function DashboardClient({ initialOverview, initialActivity }: Props) {
                                             </div>
                                         </div>
                                     ))}
-                                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                                </div>
+                            </HolographicCard>
+
+                            {/* Leaderboard */}
+                            <HolographicCard className="backdrop-blur-xl bg-black/50">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Trophy size={15} className="text-yellow-500" />
+                                    <span className="font-mono text-[11px] text-white/50 uppercase tracking-widest">Top Nodes by Uptime</span>
+                                </div>
+                                <div className="space-y-2">
+                                    {leaderboard.slice(0, 5).map((entry, index) => (
+                                        <div
+                                            key={entry.id}
+                                            className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5"
+                                        >
+                                            <div className={`w-6 h-6 rounded-full flex items-center justify-center font-mono text-xs font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                                                index === 1 ? 'bg-gray-400/20 text-gray-300' :
+                                                    index === 2 ? 'bg-orange-600/20 text-orange-400' :
+                                                        'bg-white/10 text-white/50'
+                                                }`}>
+                                                {index + 1}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-mono text-[10px] text-white truncate">{entry.label}</div>
+                                                <div className="font-mono text-[8px] text-white/40">{entry.metric}</div>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <div className="font-mono text-[11.5px] text-brand-cyan font-bold tabular-nums">{Math.round(entry.score)}d</div>
+                                                {entry.delta !== 0 && (
+                                                    <div className={`font-mono text-[9px] ${entry.delta > 0 ? 'text-brand-success' : 'text-red-400'}`}>
+                                                        {entry.delta > 0 ? '+' : ''}{entry.delta.toFixed(1)}%
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </HolographicCard>
                         </div>
