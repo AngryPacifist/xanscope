@@ -8,7 +8,6 @@ import { StatusPill } from "@/components/ui/status-pill";
 import {
   Search,
   Server,
-  Activity,
   HardDrive,
   Clock,
   Wifi,
@@ -31,30 +30,25 @@ const STATUS_FILTERS: Array<{ label: string; value: "all" | PNode["status"] }> =
   { label: "Offline", value: "offline" },
 ];
 
-// Mini sparkline component - unique per-node with visible variation
-function MiniSparkline({ value, nodeId }: { value: number; nodeId: string }) {
-  // Generate unique pattern per node using simple hash
-  const hash = nodeId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const patterns = [
-    [0.3, 0.5, 0.4, 0.7, 0.5, 0.9, 0.6, 1.0],
-    [0.4, 0.3, 0.6, 0.5, 0.8, 0.6, 0.9, 0.85],
-    [0.5, 0.7, 0.4, 0.8, 0.5, 0.7, 0.8, 0.95],
-    [0.3, 0.6, 0.5, 0.4, 0.7, 0.8, 0.6, 0.9],
-    [0.6, 0.4, 0.7, 0.5, 0.8, 0.6, 0.95, 0.8],
-  ];
-  const pattern = patterns[hash % patterns.length];
+// Stability bars based on uptime days
+function StabilityBars({ uptimeDays }: { uptimeDays: number }) {
+  // Calculate how many bars to fill (8 total)
+  // 30+ days = 8 bars (full), 0 days = 1 bar (minimum)
+  const filledBars = Math.min(8, Math.max(1, Math.ceil(uptimeDays / 4)));
 
   return (
     <div className="flex items-end gap-0.5 h-5">
-      {pattern.map((multiplier, i) => {
-        const height = 20 + (multiplier * 80);
+      {Array.from({ length: 8 }).map((_, i) => {
+        const isFilled = i < filledBars;
+        // Bars grow slightly in height to create visual hierarchy
+        const height = 40 + (i * 8);
         return (
           <div
             key={i}
-            className="w-1.5 rounded-sm"
+            className="w-1.5 rounded-sm transition-colors"
             style={{
               height: `${height}%`,
-              backgroundColor: '#22C55E' // Solid green for all bars
+              backgroundColor: isFilled ? '#22C55E' : 'rgba(255,255,255,0.1)'
             }}
           />
         );
@@ -146,10 +140,10 @@ function NodeCard({ node, index }: { node: PNode; index: number }) {
 
           <div className="p-2 rounded-lg bg-white/5">
             <div className="flex items-center gap-1.5 mb-1">
-              <Activity size={10} className="text-amber-400" />
-              <span className="font-mono text-[9px] text-white/50 uppercase">Activity</span>
+              <Zap size={10} className="text-amber-400" />
+              <span className="font-mono text-[9px] text-white/50 uppercase">Stability</span>
             </div>
-            <MiniSparkline value={node.performanceScore} nodeId={node.id} />
+            <StabilityBars uptimeDays={node.uptimeDays} />
           </div>
         </div>
 
@@ -243,7 +237,7 @@ export function NodesClient({ nodes }: Props) {
           { label: "Total Nodes", value: stats.total.toString(), icon: Server, color: "text-brand-cyan" },
           { label: "Online", value: stats.online.toString(), icon: Wifi, color: "text-brand-success" },
           { label: "Total Storage", value: `${stats.storage.toFixed(2)} TB`, icon: HardDrive, color: "text-brand-purple" },
-          { label: "Avg Performance", value: `${(stats.avgPerformance * 100).toFixed(0)}%`, icon: Activity, color: "text-amber-400" },
+          { label: "Avg Performance", value: `${(stats.avgPerformance * 100).toFixed(0)}%`, icon: Zap, color: "text-amber-400" },
         ].map(({ label, value, icon: Icon, color }) => (
           <div key={label} className="p-4 rounded-xl bg-black/40 backdrop-blur-xl border border-white/10">
             <div className="flex items-center gap-2 mb-2">

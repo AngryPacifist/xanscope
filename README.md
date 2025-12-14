@@ -49,7 +49,7 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 - **Performance History** — Timeline charts for each node
 
 ![pNode Explorer with Live Data](public/nodes-live-data.png)
-*Nodes Explorer displaying real data from 162+ pNodes on the Xandeum network*
+*Nodes Explorer displaying real data from 170+ pNodes on the Xandeum network*
 
 ### Filesystem Analytics
 - **FS Summaries** — Overview of all registered filesystems

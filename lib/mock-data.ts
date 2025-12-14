@@ -134,6 +134,7 @@ export function generateMockPnodes(): PNode[] {
       storageTb: randomInt(8, 32),
       performanceScore: Math.min(0.99, performanceBase + randomBetween(-0.1, 0.08)),
       uptimePercentage: Math.min(99.99, uptimeBase + randomBetween(-3, 1)),
+      uptimeDays: status === "offline" ? randomBetween(0, 1) : status === "syncing" ? randomBetween(1, 7) : randomBetween(5, 45),
       lastHeartbeat: minutesAgo(status === "offline" ? randomInt(20, 120) : randomInt(1, 10)),
       status,
       latitude: loc.lat,

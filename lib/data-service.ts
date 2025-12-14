@@ -87,6 +87,7 @@ export async function fetchPnodes(): Promise<PNode[]> {
       storageTb: Math.round(pod.storage_committed / (1024 ** 4) * 100) / 100, // Bytes -> TB
       performanceScore: 1 - (pod.storage_usage_percent / 100 * 0.1), // Higher usage = slightly lower score
       uptimePercentage: Math.min(99.99, 95 + (pod.uptime / 86400) * 5), // More uptime = better
+      uptimeDays: pod.uptime / 86400, // Convert seconds to days
       lastHeartbeat: new Date(pod.last_seen_timestamp * 1000).toISOString(),
       status: "online" as const, // All in gossip are online
       latitude: (Math.random() * 180) - 90, // Random placement for now until GeoIP

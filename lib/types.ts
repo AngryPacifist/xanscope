@@ -53,6 +53,7 @@ export interface PNode {
   storageTb: number;
   performanceScore: number;
   uptimePercentage: number;
+  uptimeDays: number; // Raw uptime in days
   lastHeartbeat: string;
   status: NodeStatus;
   latitude?: number;
