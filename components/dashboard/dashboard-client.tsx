@@ -208,7 +208,7 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
             </div>
 
             {/* ===== DESKTOP LAYOUT (>= lg) ===== */}
-            <div className="hidden lg:block relative min-h-screen overflow-hidden">
+            <div className="hidden lg:block relative min-h-screen">
                 {/* Background layers */}
                 <Starfield starCount={150} />
                 <HudOverlay />
@@ -233,7 +233,7 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                     <div className="flex justify-between items-start px-8 mt-6">
 
                         {/* Left Column - Stats */}
-                        <div className="w-64 xl:w-72 space-y-3 pointer-events-auto max-h-[calc(100vh-260px)] overflow-y-auto scrollbar-hide">
+                        <div className="w-[18vw] min-w-[200px] max-w-[320px] space-y-3 pointer-events-auto">
                             <HolographicCard active className="backdrop-blur-xl bg-black/50">
                                 <div className="flex items-center gap-3 mb-2">
                                     <div className="p-2 rounded bg-brand-cyan/20">
@@ -280,7 +280,7 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                         </div>
 
                         {/* Right Column - Activity Feed + Leaderboard */}
-                        <div className="w-76 xl:w-[22rem] pointer-events-auto flex flex-col gap-4">
+                        <div className="w-[20vw] min-w-[280px] max-w-[380px] pointer-events-auto flex flex-col gap-3">
                             <HolographicCard className="backdrop-blur-xl bg-black/50">
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
@@ -293,8 +293,8 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                                     </div>
                                 </div>
 
-                                <div className="space-y-2 max-h-[290px] overflow-hidden relative">
-                                    {activity.slice(0, 6).map((item, index) => (
+                                <div className="space-y-2">
+                                    {activity.slice(0, 5).map((item, index) => (
                                         <div
                                             key={item.id}
                                             className="p-2.5 rounded bg-white/5 border border-white/5 hover:border-brand-cyan/30 transition-all"
@@ -315,7 +315,6 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                                             </div>
                                         </div>
                                     ))}
-                                    <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
                                 </div>
                             </HolographicCard>
 
@@ -358,8 +357,8 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                     </div>
 
                     {/* Bottom Stats Row - Fixed but with proper margin/positioning */}
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
-                        <div className="flex gap-3">
+                    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 pointer-events-auto">
+                        <div className="flex gap-2">
                             {[
                                 { icon: Network, value: overview.totalNodes.toString(), label: "Total Nodes" },
                                 { icon: BarChart3, value: `${overview.avgStorageUsagePercent}%`, label: "Avg Usage" },
@@ -369,11 +368,11 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                                 { icon: Database, value: overview.requestsServed.toLocaleString(), label: "Gateway Requests" },
                                 { icon: HardDrive, value: formatBytes(overview.bytesTransferred), label: "Gateway Data" },
                             ].map(({ icon: Icon, value, label }) => (
-                                <div key={label} className="px-6 py-3 bg-black/60 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-3">
-                                    <Icon size={18} className="text-brand-cyan/70" />
+                                <div key={label} className="px-4 py-2.5 bg-black/70 backdrop-blur-xl rounded-lg border border-white/10 flex items-center gap-2.5">
+                                    <Icon size={16} className="text-brand-cyan/70" />
                                     <div>
-                                        <div className="font-mono text-lg font-bold text-white tabular-nums">{value}</div>
-                                        <div className="font-mono text-[8px] text-white/40 uppercase tracking-widest">{label}</div>
+                                        <div className="font-mono text-base font-bold text-white tabular-nums">{value}</div>
+                                        <div className="font-mono text-[8px] text-white/40 uppercase tracking-wider">{label}</div>
                                     </div>
                                 </div>
                             ))}
