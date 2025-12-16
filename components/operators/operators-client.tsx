@@ -111,10 +111,10 @@ function TrackedNodeCard({ node, onRemove }: { node: PNode; onRemove: () => void
   return (
     <HolographicCard className="backdrop-blur-xl bg-black/40 group">
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <Link href={`/nodes/${node.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+      <div className="flex items-start justify-between gap-2 mb-4 overflow-hidden">
+        <Link href={`/nodes/${node.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity min-w-0 flex-1 overflow-hidden">
           <div className={cn(
-            "p-2 rounded-lg",
+            "p-2 rounded-lg shrink-0",
             node.status === "online" ? "bg-brand-success/20" :
               node.status === "syncing" ? "bg-amber-500/20" : "bg-red-500/20"
           )}>
@@ -123,11 +123,11 @@ function TrackedNodeCard({ node, onRemove }: { node: PNode; onRemove: () => void
                 node.status === "syncing" ? "text-amber-400" : "text-red-400"
             } />
           </div>
-          <div>
-            <div className="font-mono text-sm font-semibold text-white group-hover:text-brand-cyan transition-colors">
+          <div className="min-w-0 flex-1">
+            <div className="font-mono text-sm font-semibold text-white group-hover:text-brand-cyan transition-colors truncate">
               {node.label}
             </div>
-            <div className="font-mono text-[10px] text-white/40">{node.id}</div>
+            <div className="font-mono text-[10px] text-white/40 truncate">{node.id}</div>
           </div>
         </Link>
         <div className="flex items-center gap-2">

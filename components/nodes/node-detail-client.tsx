@@ -319,12 +319,12 @@ export function NodeDetailClient({
 
                     <div className="space-y-3">
                         {peers.length ? peers.map(peer => (
-                            <div key={peer.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
-                                <div className="flex items-center justify-between mb-1">
-                                    <span className="font-mono text-sm font-semibold text-white">{peer.id}</span>
-                                    <span className="font-mono text-[10px] text-brand-cyan">v{peer.version}</span>
+                            <div key={peer.id} className="p-3 rounded-lg bg-white/5 border border-white/10 overflow-hidden">
+                                <div className="flex items-center justify-between gap-2 mb-1">
+                                    <span className="font-mono text-sm font-semibold text-white truncate min-w-0 flex-1">{peer.id}</span>
+                                    <span className="font-mono text-[10px] text-brand-cyan shrink-0">v{peer.version}</span>
                                 </div>
-                                <div className="font-mono text-[10px] text-white/40">
+                                <div className="font-mono text-[10px] text-white/40 truncate">
                                     {peer.address} · Last seen {new Date(peer.lastSeen).toLocaleTimeString([], { hour12: false })}
                                 </div>
                             </div>

@@ -133,7 +133,10 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                             </div>
                             <div className="font-mono text-4xl font-bold text-white">{overview.capacityTb.toFixed(2)} <span className="text-lg text-white/60">TB</span></div>
                             <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
-                                <div className="h-full w-2/3 bg-gradient-to-r from-[#00E0FF] via-[#7C3AED] to-[#A855F7] rounded-full" />
+                                <div
+                                    className="h-full bg-gradient-to-r from-[#00E0FF] via-[#7C3AED] to-[#A855F7] rounded-full"
+                                    style={{ width: `${overview.avgStorageUsagePercent}%` }}
+                                />
                             </div>
                         </div>
 
@@ -159,9 +162,9 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                         {/* Quick Stats Row */}
                         <div className="grid grid-cols-3 gap-2">
                             {[
-                                { icon: Activity, value: "8ms", label: "Latency" },
-                                { icon: BarChart3, value: "2.4 GB/s", label: "Throughput" },
-                                { icon: Network, value: "3x", label: "Replication" },
+                                { icon: Cpu, value: `${overview.networkHealthPercent}%`, label: "Health" },
+                                { icon: Activity, value: `${overview.avgUptimeDays}d`, label: "Avg Uptime" },
+                                { icon: Zap, value: `${overview.latestVersionPercent}%`, label: "Latest Ver" },
                             ].map(({ icon: Icon, value, label }) => (
                                 <div key={label} className="p-3 rounded-lg bg-black/40 border border-white/5 text-center">
                                     <Icon size={14} className="text-brand-cyan/70 mx-auto mb-1" />
@@ -198,6 +201,35 @@ export function DashboardClient({ initialOverview, initialActivity, initialLeade
                                             <div className="font-mono text-[8px] text-white/40 shrink-0">
                                                 {new Date(item.timestamp).toLocaleTimeString([], { hour12: false })}
                                             </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Leaderboard */}
+                        <div className="p-4 rounded-lg bg-black/60 border border-white/10">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Trophy size={14} className="text-yellow-500" />
+                                <span className="font-mono text-[10px] text-white/50 uppercase tracking-widest">Top Nodes by Uptime</span>
+                            </div>
+                            <div className="space-y-2">
+                                {leaderboard.slice(0, 3).map((entry, index) => (
+                                    <div
+                                        key={entry.id}
+                                        className="flex items-center gap-3 p-2 rounded bg-white/5 border border-white/5"
+                                    >
+                                        <div className={`w-5 h-5 rounded-full flex items-center justify-center font-mono text-[10px] font-bold ${index === 0 ? 'bg-yellow-500/20 text-yellow-400' :
+                                                index === 1 ? 'bg-gray-400/20 text-gray-300' :
+                                                    'bg-orange-600/20 text-orange-400'
+                                            }`}>
+                                            {index + 1}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-mono text-[10px] text-white truncate">{entry.label}</div>
+                                        </div>
+                                        <div className="font-mono text-[10px] text-brand-cyan font-bold tabular-nums">
+                                            {Math.round(entry.score)}d
                                         </div>
                                     </div>
                                 ))}
