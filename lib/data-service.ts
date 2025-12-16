@@ -84,7 +84,9 @@ export async function fetchPnodes(): Promise<PNode[]> {
       provider: "Community",
       version: pod.version,
       release: pod.version,
-      storageTb: Math.round(pod.storage_committed / (1024 ** 4) * 100) / 100, // Bytes -> TB
+      storageTb: Math.round(pod.storage_committed / (1024 ** 4) * 100) / 100, // Bytes -> TB (committed)
+      storageUsedTb: Math.round(pod.storage_used / (1024 ** 4) * 100) / 100, // Bytes -> TB (used)
+      storageUsagePercent: pod.storage_usage_percent, // Direct from API
       performanceScore: 1 - (pod.storage_usage_percent / 100 * 0.1), // Higher usage = slightly lower score
       uptimePercentage: Math.min(99.99, 95 + (pod.uptime / 86400) * 5), // More uptime = better
       uptimeDays: pod.uptime / 86400, // Convert seconds to days
@@ -138,20 +140,29 @@ export async function fetchPnodeStats(
 
   try {
     // Get current stats from pRPC
-    const stats = await prpcClient.getStats();
+    const result = await prpcClient.getStats();
+
+    // Validate response structure before accessing
+    if (!result?.stats) {
+      console.warn("get-stats returned no stats object");
+      return [];
+    }
+
+    const stats = result.stats;
+    const metadata = result.metadata ?? {};
 
     // Return a single snapshot (historical data would require persistent storage)
     return [{
       timestamp: new Date().toISOString(),
-      cpuPercent: stats.stats.cpu_percent,
-      ramUsedGb: stats.stats.ram_used / (1024 ** 3),
-      ramTotalGb: stats.stats.ram_total / (1024 ** 3),
-      uptimeSeconds: stats.stats.uptime,
-      packetsReceived: stats.stats.packets_received,
-      packetsSent: stats.stats.packets_sent,
-      activeStreams: stats.stats.active_streams,
-      totalBytes: stats.metadata.total_bytes,
-      totalPages: stats.metadata.total_pages
+      cpuPercent: stats.cpu_percent ?? 0,
+      ramUsedGb: (stats.ram_used ?? 0) / (1024 ** 3),
+      ramTotalGb: (stats.ram_total ?? 1) / (1024 ** 3),
+      uptimeSeconds: stats.uptime ?? 0,
+      packetsReceived: stats.packets_received ?? 0,
+      packetsSent: stats.packets_sent ?? 0,
+      activeStreams: stats.active_streams ?? 0,
+      totalBytes: metadata.total_bytes ?? 0,
+      totalPages: metadata.total_pages ?? 0
     }];
   } catch (err) {
     console.error("Failed to fetch pNode stats:", err);
@@ -290,8 +301,8 @@ export async function fetchFsSummaries(): Promise<FileSystemSummary[]> {
   }
 
   // Filesystem summaries would come from indexing Xandeum chain data
-  // For now, return mock as there's no direct RPC for this
-  return mockFsSummaries;
+  // No direct pRPC endpoint available - return empty in real mode
+  return [];
 }
 
 export async function fetchFsTree(

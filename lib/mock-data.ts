@@ -122,6 +122,9 @@ export function generateMockPnodes(): PNode[] {
       uptimeBase = 80;
     }
 
+    const storageTb = randomInt(8, 32);
+    const storageUsagePercent = randomBetween(5, 85);
+
     return {
       id: `node-${normalizeForId(loc.city)}-${String(index + 1).padStart(2, '0')}`,
       label: generateNodeName(loc.city, index),
@@ -131,7 +134,9 @@ export function generateMockPnodes(): PNode[] {
       provider: randomPick(PROVIDERS),
       version: VERSIONS[releaseIdx] || VERSIONS[0],
       release: RELEASES[releaseIdx] || RELEASES[0],
-      storageTb: randomInt(8, 32),
+      storageTb,
+      storageUsedTb: Math.round(storageTb * storageUsagePercent / 100 * 100) / 100,
+      storageUsagePercent,
       performanceScore: Math.min(0.99, performanceBase + randomBetween(-0.1, 0.08)),
       uptimePercentage: Math.min(99.99, uptimeBase + randomBetween(-3, 1)),
       uptimeDays: status === "offline" ? randomBetween(0, 1) : status === "syncing" ? randomBetween(1, 7) : randomBetween(5, 45),

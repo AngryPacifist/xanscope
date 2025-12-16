@@ -9,7 +9,6 @@ import {
     HardDrive,
     Clock,
     Zap,
-    Activity,
     Globe,
     Cpu,
     MemoryStick,
@@ -33,42 +32,54 @@ interface NodeDetailClientProps {
     history: PNodeHistoryPoint[];
 }
 
-// Performance Timeline Chart - value-based coloring
-function PerformanceChart({ data, nodeId }: { data: number[]; nodeId: string }) {
-    // Generate more varied data based on nodeId hash for visual interest
-    const hash = nodeId.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-
-    // Create 24 data points with visible variation
-    const enhancedData = Array.from({ length: 24 }, (_, i) => {
-        // Base from real data or generate
-        const baseValue = data[i] ?? 90;
-        // Add variation: sine wave + random offset based on hash
-        const variation = Math.sin((i + hash) * 0.5) * 15 + Math.cos((i * hash) * 0.3) * 10;
-        return Math.min(100, Math.max(60, baseValue + variation - 10));
-    });
-
-    const max = Math.max(...enhancedData);
-    const min = Math.min(...enhancedData);
-    const range = max - min || 1;
-
-    // Color based on value: green (85%+), yellow (70-85%), red (<70%)
-    const getBarColor = (value: number) => {
-        if (value >= 85) return '#22C55E'; // Green - healthy
-        if (value >= 70) return '#F59E0B'; // Amber - warning
-        return '#EF4444'; // Red - critical
+// Storage Usage Bar - Real data visualization
+function StorageUsageBar({ usedTb, committedTb, usagePercent }: { usedTb: number; committedTb: number; usagePercent: number }) {
+    // Color based on usage: green (<50%), yellow (50-80%), red (>80%)
+    const getBarColor = () => {
+        if (usagePercent < 50) return 'from-brand-cyan to-brand-purple';
+        if (usagePercent < 80) return 'from-amber-500 to-orange-500';
+        return 'from-red-500 to-pink-500';
     };
 
     return (
-        <div className="h-24 flex items-end gap-1">
-            {enhancedData.map((value, i) => {
-                const height = ((value - min) / range) * 100;
+        <div className="space-y-3">
+            <div className="flex items-center justify-between text-sm">
+                <span className="font-mono text-white/50">Used</span>
+                <span className="font-mono font-bold text-white">{usedTb} TB / {committedTb} TB</span>
+            </div>
+            <div className="h-4 bg-white/10 rounded-full overflow-hidden">
+                <div
+                    className={`h-full bg-gradient-to-r ${getBarColor()} rounded-full transition-all duration-500`}
+                    style={{ width: `${Math.min(100, usagePercent)}%` }}
+                />
+            </div>
+            <div className="flex items-center justify-between text-xs">
+                <span className="font-mono text-white/40">0%</span>
+                <span className="font-mono text-brand-cyan font-bold">{usagePercent.toFixed(1)}% Used</span>
+                <span className="font-mono text-white/40">100%</span>
+            </div>
+        </div>
+    );
+}
+
+// Stability bars based on uptime days (same as node cards)
+function StabilityBars({ uptimeDays }: { uptimeDays: number }) {
+    // Calculate how many bars to fill (8 total)
+    // 30+ days = 8 bars (full), 0 days = 1 bar (minimum)
+    const filledBars = Math.min(8, Math.max(1, Math.ceil(uptimeDays / 4)));
+
+    return (
+        <div className="flex items-end gap-1 h-8">
+            {Array.from({ length: 8 }).map((_, i) => {
+                const isFilled = i < filledBars;
+                const height = 40 + (i * 8);
                 return (
                     <div
                         key={i}
-                        className="flex-1 rounded-t"
+                        className="w-3 rounded-sm transition-colors"
                         style={{
-                            height: `${Math.max(15, height)}%`,
-                            backgroundColor: getBarColor(value)
+                            height: `${height}%`,
+                            backgroundColor: isFilled ? '#22C55E' : 'rgba(255,255,255,0.1)'
                         }}
                     />
                 );
@@ -112,7 +123,6 @@ export function NodeDetailClient({
     history
 }: NodeDetailClientProps) {
     const latestStats = stats.at(-1);
-    const performanceData = history.map(h => h.performanceScore * 100);
     const attachedFs = filesystems.filter(fs => fs.pinnedNodeId === node.id);
     const nodeOperations = operations.filter(op => op.nodeId === node.id).slice(0, 5);
 
@@ -166,32 +176,36 @@ export function NodeDetailClient({
 
             {/* Main Content Grid */}
             <div className="grid gap-6 lg:grid-cols-3 mb-8">
-                {/* Performance Timeline */}
+                {/* Storage & Stability */}
                 <HolographicCard className="lg:col-span-2 backdrop-blur-xl bg-black/40">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between mb-6">
                         <div>
                             <div className="flex items-center gap-2 mb-1">
-                                <Activity size={14} className="text-brand-cyan" />
-                                <span className="font-mono text-[10px] text-white/50 uppercase tracking-wider">Performance Timeline</span>
+                                <HardDrive size={14} className="text-brand-cyan" />
+                                <span className="font-mono text-[10px] text-white/50 uppercase tracking-wider">Storage & Stability</span>
                             </div>
-                            <p className="font-mono text-[10px] text-white/30">Based on pnRPC stats snapshots (24h)</p>
+                            <p className="font-mono text-[10px] text-white/30">Real-time data from pRPC</p>
                         </div>
                         <div className="text-right">
-                            <div className="font-mono text-3xl font-bold text-white">{(node.performanceScore * 100).toFixed(1)}%</div>
-                            <div className="font-mono text-[10px] text-brand-success">Current Score</div>
+                            <div className="font-mono text-3xl font-bold text-white">{node.storageUsagePercent.toFixed(1)}%</div>
+                            <div className="font-mono text-[10px] text-brand-cyan">Storage Usage</div>
                         </div>
                     </div>
 
-                    <PerformanceChart data={performanceData} nodeId={node.id} />
+                    <StorageUsageBar
+                        usedTb={node.storageUsedTb}
+                        committedTb={node.storageTb}
+                        usagePercent={node.storageUsagePercent}
+                    />
 
                     <div className="grid grid-cols-3 gap-4 mt-6 pt-4 border-t border-white/10">
                         <div>
-                            <div className="font-mono text-[10px] text-white/40 uppercase">Uptime (7d)</div>
-                            <div className="font-mono text-xl font-bold text-white">{node.uptimePercentage.toFixed(2)}%</div>
+                            <div className="font-mono text-[10px] text-white/40 uppercase">Uptime</div>
+                            <div className="font-mono text-xl font-bold text-white">{Math.floor(node.uptimeDays)}d {Math.floor((node.uptimeDays % 1) * 24)}h</div>
                         </div>
                         <div>
-                            <div className="font-mono text-[10px] text-white/40 uppercase">Storage Used</div>
-                            <div className="font-mono text-xl font-bold text-white">{node.storageTb} TB</div>
+                            <div className="font-mono text-[10px] text-white/40 uppercase mb-2">Stability</div>
+                            <StabilityBars uptimeDays={node.uptimeDays} />
                         </div>
                         <div>
                             <div className="font-mono text-[10px] text-white/40 uppercase">Last Heartbeat</div>

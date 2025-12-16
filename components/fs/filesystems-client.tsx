@@ -246,6 +246,14 @@ export function FilesystemsClient({ filesystems, operations }: FilesystemsClient
                         <FilesystemCard key={fs.fsid} fs={fs} />
                     ))}
                 </div>
+            ) : filesystems.length === 0 ? (
+                <div className="text-center py-16">
+                    <Database size={48} className="mx-auto text-white/10 mb-4" />
+                    <p className="font-mono text-sm text-white/40 mb-2">No filesystem data available</p>
+                    <p className="font-mono text-[10px] text-white/30 max-w-md mx-auto">
+                        Filesystem indexing requires Xandeum chain data. This feature will be available once a chain indexer is integrated.
+                    </p>
+                </div>
             ) : (
                 <div className="text-center py-12">
                     <FolderOpen size={48} className="mx-auto text-white/10 mb-4" />

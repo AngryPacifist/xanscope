@@ -50,7 +50,9 @@ export interface PNode {
   provider: string;
   version: string;
   release: string;
-  storageTb: number;
+  storageTb: number; // Committed storage
+  storageUsedTb: number; // Actually used storage
+  storageUsagePercent: number; // Usage percentage
   performanceScore: number;
   uptimePercentage: number;
   uptimeDays: number; // Raw uptime in days
