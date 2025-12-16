@@ -20,7 +20,7 @@ This project was built for the **Xandeum pNode Analytics Platform Bounty**.
 🌐 **[xanscope.vercel.app](https://xanscope.vercel.app)** *(with mock data)*
 
 ### Demo Video
-📹 Coming soon - demonstrating real pNode connection
+📹 **[Watch Demo](https://youtu.be/ZyHiXBl5In4)** — Real pNode connection walkthrough
 
 ### Requirements Checklist
 

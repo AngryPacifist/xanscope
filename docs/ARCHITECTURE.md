@@ -248,3 +248,25 @@ The `data-service.ts` layer transforms raw pRPC data into the canonical `PNode` 
 - [ ] GeoIP lookup for accurate node locations
 - [ ] Historical data storage with TimescaleDB
 - [ ] Multi-pNode aggregation
+
+### Production Optimization: Database Caching
+
+For production deployments with high traffic, consider adding a database cache layer:
+
+```
+Current:     User Request → Next.js → pRPC → Response
+Optimized:   Background Worker → pRPC → MongoDB (cache)
+             User Request → Next.js → MongoDB → Response (faster!)
+```
+
+**Implementation approach:**
+1. **MongoDB Atlas** (free tier) — Store cached pNode data
+2. **Scheduled function** — Poll pRPC every 5 minutes, update cache
+3. **API routes** — Read from MongoDB instead of direct pRPC
+
+**Benefits:**
+- Faster response times (no pRPC latency)
+- Works even if pNode is temporarily unreachable
+- Scales better with multiple users
+
+This architecture is not implemented in the current version but is recommended for production deployments with many concurrent users.
