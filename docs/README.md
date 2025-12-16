@@ -12,7 +12,7 @@ Welcome to the XanScope documentation. This folder contains everything you need 
 | [API Reference](./API-REFERENCE.md) | pRPC methods used by XanScope |
 | [Architecture](./ARCHITECTURE.md) | System design and data flow |
 
-## 🏆 Hackathon Submission
+## 🏆 Submission
 
 This project was built for the **Xandeum pNode Analytics Platform Bounty**.
 
