@@ -7,13 +7,13 @@
 
 XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum](https://xandeum.network) storage provider nodes (pNodes). It provides real-time insights into network health, node performance, and filesystem operations.
 
-> 🏆 **Built for the Xandeum pNode Analytics Platform Bounty**
+> **Built for the Xandeum pNode Analytics Platform Bounty**
 
 ![XanScope Dashboard](public/dashboard.png)
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
@@ -25,7 +25,7 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 
 ---
 
-## ✨ Features
+## Features
 
 ### Dashboard
 - **Network Overview** — Live stats: total nodes, storage capacity, average usage, network health
@@ -65,7 +65,7 @@ XanScope is a web-based analytics dashboard for monitoring and managing [Xandeum
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 XanScope uses a **Dual-Client Architecture** to support both development (mock data) and production (live pRPC) modes:
 
@@ -105,7 +105,7 @@ XanScope uses a **Dual-Client Architecture** to support both development (mock d
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -131,7 +131,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the dashboard.
 
 ---
 
-## ⚙️ Environment Variables
+## Environment Variables
 
 Create a `.env.local` file in the project root:
 
@@ -165,7 +165,7 @@ To connect to a real pNode:
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 xanscope/
@@ -203,7 +203,7 @@ xanscope/
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Category | Technology |
 |----------|------------|
@@ -216,7 +216,7 @@ xanscope/
 
 ---
 
-## 🔌 pRPC API Reference
+## pRPC API Reference
 
 XanScope consumes these pNode RPC methods:
 
@@ -243,7 +243,7 @@ Returns all known peer pNodes with extended statistics (uptime, storage, version
 
 ---
 
-## 📦 Deployment
+## Deployment
 
 ### Vercel (Recommended)
 
@@ -266,7 +266,7 @@ docker run -p 3000:3000 xanscope
 
 ---
 
-## 🧪 Development
+## Development
 
 ```bash
 # Run dev server
@@ -284,40 +284,26 @@ npm start
 
 ---
 
-## 📋 Bounty Submission
+### Highlights
 
-This project was built for the **Xandeum pNode Analytics Platform Bounty**.
-
-### Requirements Met
-
-| Requirement | Status |
-|-------------|--------|
-| Web-based analytics platform | ✅ |
-| Retrieve pNodes via pRPC | ✅ |
-| Display pNode information | ✅ |
-| Accessible and usable | ✅ |
-| Deployment documentation | ✅ |
-
-### Innovation Highlights
-
-- 🌍 **Interactive 3D Globe** — Real-time node visualization with IP geo-location
-- 🎨 **Premium Dark Aesthetic** — Inspired by Xandeum branding
-- 📊 **Operators Dashboard** — Personal node watchlist
-- 🔄 **Dual Architecture** — Seamless mock ↔ production toggle
-- 📍 **Real IP Geo-Location** — Nodes positioned on globe using ip-api.com batch lookup
-- 🏆 **Live Leaderboard** — Top nodes ranked by uptime in real-time
-- 🚀 **Gateway Metrics** — Unique insight into RPC requests and data transfer
-- ⏱️ **5-Minute Refresh** — Globe data refreshes every 5 minutes for live updates
+- **Interactive 3D Globe** — Real-time node visualization with IP geo-location
+- **Premium Dark Aesthetic** — Inspired by Xandeum branding
+- **Operators Dashboard** — Personal node watchlist
+- **Dual Architecture** — Seamless mock ↔ production toggle
+- **Real IP Geo-Location** — Nodes positioned on globe using ip-api.com batch lookup
+- **Live Leaderboard** — Top nodes ranked by uptime in real-time
+- **Gateway Metrics** — Unique insight into RPC requests and data transfer
+- **5-Minute Refresh** — Globe data refreshes every 5 minutes for live updates
 
 ---
 
-## 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE) for details.
 
 ---
 
-## 🔗 Links
+## Links
 
 - [Xandeum Network](https://xandeum.network)
 - [Xandeum Docs](https://docs.xandeum.network)

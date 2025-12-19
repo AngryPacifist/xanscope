@@ -50,9 +50,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 By default, XanScope runs with **mock data** enabled. This is perfect for:
 
-- 🎨 UI development without network dependencies
-- 📸 Screenshots and demos
-- 🧪 Testing new features
+- UI development without network dependencies
+- Screenshots and demos
+- Testing new features
 
 Mock data includes:
 - ~40 randomized pNodes with varying statuses
